@@ -198,66 +198,39 @@ let socket;
   window._redChessOnline = { socket: () => socket };
 
   initSocket(); // ✅ THIS WAS MISSING — now socket actually starts!
-  // ── Apply online room data when game.html loads ───────────────────────────
-(function applyOnlineRoom() {
+    // ── Apply online room data when game.html loads ───────────────────────────
+  (function applyOnlineRoom() {
     const room = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
-    if (!room.myColor || !room.roomId) return; // not an online game, skip
+    if (!room.myColor || !room.roomId) return;
 
-    // Set color + flip board for black player
     window._botActive = true;
     window._playerCol = room.myColor;
     window._flipped   = room.myColor === 'b';
 
-    // Set opponent name in the nameplate (game.html's opponentName element)
     const nameEl   = document.getElementById('opponentName');
     const avatarEl = document.getElementById('opponentAvatar');
     if (nameEl)   nameEl.textContent   = room.opponentName || 'Opponent';
     if (avatarEl) avatarEl.textContent = '♟';
 
-    // Re-render board with correct orientation
     if (typeof window.renderBoard === 'function') window.renderBoard();
 
-    // Fix board labels direction
     const flipped = room.myColor === 'b';
     const ranks = flipped ? ['1','2','3','4','5','6','7','8'] : ['8','7','6','5','4','3','2','1'];
     const files = flipped ? ['h','g','f','e','d','c','b','a'] : ['a','b','c','d','e','f','g','h'];
     const rl = document.getElementById('rankLabels');
     const fl = document.getElementById('fileLabels');
-    if (rl) { 
-        rl.innerHTML = ''; 
-        ranks.forEach(r => { 
-            const s = document.createElement('span'); 
-            s.textContent = r; 
-            rl.appendChild(s); 
-        }); 
-    }
-    if (fl) { 
-        fl.innerHTML = ''; 
-        files.forEach(f => { 
-            const s = document.createElement('span'); 
-            s.textContent = f; 
-            fl.appendChild(s); 
-        }); 
-    }
+    if (rl) { rl.innerHTML = ''; ranks.forEach(r => { const s = document.createElement('span'); s.textContent = r; rl.appendChild(s); }); }
+    if (fl) { fl.innerHTML = ''; files.forEach(f => { const s = document.createElement('span'); s.textContent = f; fl.appendChild(s); }); }
 
-    // Update player bars with real names
     if (typeof window.updatePlayerBars === 'function') window.updatePlayerBars();
 
-    // Wire up move sync with Socket.io server
-    if (typeof window.onOnlineMove === 'function') {
-        window.onOnlineMove((move, fen) => {
-            // opponent move received — apply it
-            if (typeof window.applyMove === 'function') {
-                window.applyMove(move.from[0], move.from[1], move.to[0], move.to[1]);
-            }
-        });
-    }
+    // ── Move sync ────────────────────────────────────────────────────────────
+    let _onlineReceiving = false;
 
-    // Override applyMove to send moves to server
     const _originalApplyMove = window.applyMove;
     window.applyMove = function(fromRow, fromCol, toRow, toCol) {
         _originalApplyMove(fromRow, fromCol, toRow, toCol);
-        if (typeof window.sendOnlineMove === 'function') {
+        if (!_onlineReceiving) {
             window.sendOnlineMove(
                 { from: [fromRow, fromCol], to: [toRow, toCol] },
                 null
@@ -265,5 +238,14 @@ let socket;
         }
     };
 
-})();
+    window.onOnlineMove((move, fen) => {
+        _onlineReceiving = true;
+        if (typeof window.applyMove === 'function') {
+            window.applyMove(move.from[0], move.from[1], move.to[0], move.to[1]);
+        }
+        _onlineReceiving = false;
+    });
+
+  })();
+
 })();
