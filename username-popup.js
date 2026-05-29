@@ -244,9 +244,13 @@
             bottomName = bottomColor === playerCol ? username : botName;
             topName    = topColor    === playerCol ? username : botName;
         } else {
-            bottomName = bottomColor === 'w' ? username : 'Opponent';
-            topName    = topColor    === 'w' ? username : 'Opponent';
-        }
+    // ✅ Check if this is a Socket.io online game
+    const onlineRoom = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
+    const opponentName = onlineRoom.opponentName || 'Opponent';
+
+    bottomName = bottomColor === 'w' ? username : opponentName;
+    topName    = topColor    === 'w' ? username : opponentName;
+}
 
         bottomBar.innerHTML = `<span class="${dotClass(bottomColor)}"></span>${bottomName}`;
         if (topBar) topBar.innerHTML = `<span class="${dotClass(topColor)}"></span>${topName}`;
