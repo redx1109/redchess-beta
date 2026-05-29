@@ -7,10 +7,7 @@
 //   • Game rooms (move sync, resign, draw)
 // ────────────────────────────────────────────────────────────────────────────
 // PUT THIS before all other routes
-app.use('/socket.io', (req, res, next) => {
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  next();
+
 });
 require('dotenv').config();
 const express   = require('express');
@@ -21,16 +18,34 @@ const cors      = require('cors');
 
 const app    = express();
 const server = http.createServer(app);
-app.use((req, res, next) => {
-  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-  res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+app.use(cors({
+  origin: [
+    'https://red.redchess.workers.dev',
+    'https://redchess.workers.dev',
+    'http://localhost:3000',
+    'http://localhost:5500'
+  ],
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
+
+app.use(express.json());
+// ✅ CORS header for socket.io client file
+app.use('/socket.io', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Access-Control-Allow-Origin', '*');
   next();
 });
-
-const io     = new Server(server, {
+const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || '*',
-    methods: ['GET', 'POST']
+    origin: [
+      'https://red.redchess.workers.dev',
+      'https://redchess.workers.dev',
+      'http://localhost:3000',
+      'http://localhost:5500'
+    ],
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
