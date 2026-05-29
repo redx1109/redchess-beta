@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About – Red Chess</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .about-wrap {
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 20px 80px;
+      text-align: left;
+    }
+
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 36px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 8px 18px;
+      border-radius: 4px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .back-btn:hover {
+      color: rgba(255,255,255,0.8);
+      border-color: rgba(255,255,255,0.3);
+    }
+
+    .about-section {
+      margin-bottom: 36px;
+    }
+
+    .about-section h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #c0392b;
+      margin-bottom: 12px;
+    }
+
+    .about-section p {
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 1.05rem;
+      font-weight: 300;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.85;
+      margin-bottom: 10px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 480px) {
+      .feature-grid { grid-template-columns: 1fr; }
+    }
+
+    .feature-card {
+      border: 1px solid rgba(192,57,43,0.25);
+      border-radius: 8px;
+      padding: 18px 16px;
+      background: rgba(192,57,43,0.04);
+    }
+
+    .feature-card .icon {
+      font-size: 1.4rem;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .feature-card h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 6px;
+    }
+
+    .feature-card p {
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 0.92rem;
+      font-weight: 300;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .updated-tag {
+      display: block;
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.3);
+      margin-top: 4px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="c"></canvas>
+  <div class="glow"></div>
+  <div class="bc" id="bcBR"></div>
+  <div class="bc" id="bcTL"></div>
+
+  <div class="content">
+
+    <span class="eyebrow">The Royal Game</span>
+
+    <div class="title-wrap">
+      <h1>About</h1>
+      <p class="tagline">Built for chess lovers</p>
+    </div>
+
+    <div class="rule" role="separator">
+      <div class="rl"></div><div class="rd"></div><div class="rr"></div>
+    </div>
+
+    <div class="about-wrap">
+
+      <a class="back-btn" href="index.html">← Back to Home</a>
+
+      <div class="about-section">
+        <h2>What is Red Chess?</h2>
+        <p>Red Chess is a free, browser-based chess platform built for players of all skill levels. Whether you want to sharpen your game against a powerful engine or dive deep into your past games, Red Chess gives you the tools to grow as a player — beautifully and without any sign-up required.</p>
+        <p>Every feature is designed to feel fast, clean, and focused. No clutter. Just chess.</p>
+      </div>
+
+      <div class="about-section">
+        <h2>Features</h2>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <span class="icon">♟</span>
+            <h3>Play vs Bot</h3>
+            <p>Challenge Stockfish — the world's strongest chess engine — at any skill level using the ELO slider.</p>
+          </div>
+          <div class="feature-card">
+            <span class="icon">⊹</span>
+            <h3>Game Analysis</h3>
+            <p>Import games from Lichess or Chess.com and get detailed move-by-move feedback and accuracy stats.</p>
+          </div>
+          <div class="feature-card">
+            <span class="icon">♜</span>
+            <h3>No Account Needed</h3>
+            <p>Jump straight in. No sign-up, no login, no personal data collected.</p>
+          </div>
+          <div class="feature-card">
+            <span class="icon">♛</span>
+            <h3>Works in Browser</h3>
+            <p>Runs entirely in your browser. Stockfish analysis happens locally — no data leaves your device.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="about-section">
+        <h2>Built With</h2>
+        <p>Red Chess is built with plain HTML, CSS, and JavaScript — no heavy frameworks. Chess logic and analysis are powered by <strong style="color:rgba(255,255,255,0.8)">Stockfish</strong>, the open-source chess engine trusted by grandmasters worldwide.</p>
+      </div>
+
+      <div class="about-section">
+        <h2>Contact</h2>
+        <p>Have feedback, suggestions, or found a bug? Reach out at <a href="mailto:redchess@example.com" style="color:#c0392b;">redchess@example.com</a> — we'd love to hear from you.</p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="ver">
+    <span>Red Chess &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; <a href="privacy-policy.html" style="color:inherit;text-decoration:none;opacity:0.6;">Privacy Policy</a></span>
+  </div>
+
+  <script src="script.js"></script>
+  <script src="coi-serviceworker.min.js"></script>
+  <script src="bganimation.js"></script>
+</body>
+</html>

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis — Red Chess</title>
+    <link rel="stylesheet" href="analysis.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+    <link rel="icon" href="../favicon.png">
+    <link rel="apple-touch-icon" href="../favicon.png">
+    <link rel="manifest" href="../manifest.json">
+    <style>
+    /* ════════════════════════════════════════════
+       MOBILE — analysis board screen  ≤ 700 px
+       Desktop layout (analysis.css) unchanged.
+    ════════════════════════════════════════════ */
+    @media (max-width: 700px) {
+
+        /* ── Screen 4: board analysis ── */
+        #screenAnalysis .analysis-layout {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Dissolve right-col so its children become direct flex items
+           in the column layout — lets us freely reorder them with order */
+        #screenAnalysis .right-col {
+            display: contents !important;
+        }
+
+        /* ── Order: move-detail · board-col · nav-strip · move-list ── */
+        #screenAnalysis .move-detail  { order: 0; }   /* top — above board */
+        #screenAnalysis .board-col    { order: 1; }   /* board             */
+        #screenAnalysis .nav-strip    { order: 2; }   /* nav below board   */
+        #screenAnalysis .panel-title  { order: 3; }   /* "Moves" label     */
+        #screenAnalysis .move-list    { order: 4; }   /* move list last    */
+
+        /* move-detail: always visible on mobile (JS sets display:none — override) */
+        #screenAnalysis .move-detail {
+            display: flex !important;
+            flex-direction: column !important;
+            padding: 10px 14px 8px !important;
+            margin: 0 !important;
+            border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+            min-height: 52px !important;
+        }
+
+        /* Board column: full width */
+        #screenAnalysis .board-col {
+            width: 100% !important;
+            padding: 0 !important;
+        }
+
+        /* board-row-wrap: keep eval bar + board side by side */
+        #screenAnalysis .board-row-wrap {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: stretch !important;
+            width: 100% !important;
+        }
+
+        /* board fills remaining width */
+        #screenAnalysis .board-and-coords {
+            flex: 1 !important;
+        }
+        #screenAnalysis .board-container {
+            width: 100% !important;
+            aspect-ratio: 1 / 1 !important;
+            position: relative !important;
+        }
+        #screenAnalysis #board {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        #screenAnalysis #arrowLayer {
+            position: absolute !important;
+            inset: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            pointer-events: none !important;
+        }
+
+        /* Coord labels */
+        #screenAnalysis .rank-labels {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-around !important;
+            align-self: stretch !important;
+            width: 16px !important;
+            font-size: 9px !important;
+        }
+        #screenAnalysis .file-labels {
+            display: flex !important;
+            justify-content: space-around !important;
+            font-size: 9px !important;
+            padding: 2px 0 !important;
+        }
+
+        /* Nav strip: full width, bigger tap targets */
+        #screenAnalysis .nav-strip {
+            display: flex !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            padding: 10px 12px !important;
+            border-top: 1px solid rgba(255,255,255,0.06) !important;
+        }
+        #screenAnalysis .nav-btn {
+            padding: 10px 20px !important;
+            font-size: 16px !important;
+        }
+        #screenAnalysis .nav-pos {
+            padding: 10px 8px !important;
+            font-size: 12px !important;
+        }
+
+        /* Move list: scrollable below nav */
+        #screenAnalysis .panel-title {
+            padding: 8px 14px 4px !important;
+            font-size: 10px !important;
+        }
+        #screenAnalysis .move-list {
+            max-height: 180px !important;
+            overflow-y: auto !important;
+            padding: 0 10px 12px !important;
+        }
+
+        /* x-btn stays fixed top-right */
+        #screenAnalysis .x-btn {
+            position: fixed !important;
+            top: 0.6rem !important;
+            right: 0.9rem !important;
+            z-index: 100 !important;
+        }
+
+        /* Status bar below board, full width */
+        #screenAnalysis .status-bar {
+            font-size: 11px !important;
+            text-align: center !important;
+            padding: 6px 12px !important;
+        }
+    }
+    </style>
+</head>
+<body>
+<div class="bg-texture"></div>
+<canvas id="c" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
+<!-- ══════════════════════ SCREEN 1 · SELECTION -->
+<div class="screen" id="screenSelection">
+    <a href="../index.html" class="back-link">← Back</a>
+    <div class="sel-wrap">
+        <header class="sel-header">
+            <div class="sel-ornament">✦</div>
+    
+            <h1 class="sel-title">Game Analysis</h1>
+            <p class="sel-sub">Import a game from Lichess or Chess.com to get move-by-move analysis powered by Stockfish.</p>
+        </header>
+
+        <div class="sel-card">
+            <div class="tabs">
+                <button class="tab active" data-tab="pgn">⊞ Paste PGN</button>
+                <button class="tab" data-tab="lichess">◈ Lichess</button>
+                <button class="tab" data-tab="chesscom">♟ Chess.com</button>
+            </div>
+
+            <div class="tab-content active" id="tab-pgn">
+                <textarea id="pgnInput" placeholder="Paste PGN here…&#10;&#10;[White &quot;…&quot;]&#10;[Black &quot;…&quot;]&#10;&#10;1. e4 e5 2. Nf3 …"></textarea>
+                <button class="primary-btn" id="loadPgnBtn">Analyse Game →</button>
+            </div>
+
+            <div class="tab-content" id="tab-lichess">
+                <label class="field-label">Lichess Username</label>
+                <input type="text" id="lichessUser" placeholder="e.g. Magnus_Carlsen" />
+                <button class="primary-btn" id="fetchLichessBtn">Fetch Games →</button>
+            </div>
+
+            <div class="tab-content" id="tab-chesscom">
+                <label class="field-label">Chess.com Username</label>
+                <input type="text" id="chesscomUser" placeholder="e.g. hikaru" />
+                <button class="primary-btn" id="fetchChesscomBtn">Fetch Games →</button>
+            </div>
+        </div>
+
+        <div class="sel-status" id="selStatus"></div>
+
+        <!-- About this page (for Google AdSense content policy) -->
+        <div style="margin-top:28px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;text-align:center;">
+            <button onclick="(function(b,p){p.style.display=p.style.display==='block'?'none':'block';b.textContent=p.style.display==='block'?'About this page \u25b4':'About this page \u25be';})(this,document.getElementById('analysisAboutBox'))" style="background:transparent;border:none;font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.2);cursor:pointer;padding:4px 0;">
+                About this page ▾
+            </button>
+            <div id="analysisAboutBox" style="display:none;margin-top:14px;text-align:left;">
+                <p style="font-family:'Crimson Pro',serif;font-size:14px;font-weight:300;color:rgba(255,255,255,0.45);line-height:1.8;margin:0;">
+                    Red Chess Analysis lets you review any chess game in detail using the <strong style="color:rgba(255,255,255,0.65)">Stockfish</strong> engine.
+                    Import a game by pasting a PGN, or enter your username from Lichess or Chess.com to fetch your recent games directly.
+                    Once loaded, Stockfish evaluates every move and classifies it as Brilliant, Good, Inaccuracy, Mistake, or Blunder.
+                    You will see an overall accuracy score for both players, a phase-by-phase breakdown across Opening, Middlegame, and Endgame,
+                    plus a full move-by-move board review with the best move shown for every mistake.
+                    All analysis runs locally in your browser — no data is sent to any server.
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ══════════════════════ SCREEN 2 · GAMES LIST -->
+<div class="screen hidden" id="screenGames">
+    <div class="games-page">
+        <div class="games-topbar">
+            <button class="ghost-btn" id="gamesBackBtn">← Back</button>
+            <div class="games-topbar-center">
+                <span class="games-user-label" id="gamesUserLabel"></span>
+                <span class="games-count-label" id="gamesCountLabel"></span>
+            </div>
+            <div></div>
+        </div>
+        <div class="games-grid" id="gamesList"></div>
+    </div>
+</div>
+
+<!-- ══════════════════════ SCREEN 3 · STATS REPORT (Chess.com style) -->
+<div class="screen hidden" id="screenStats">
+    <div class="stats-page">
+
+        <button class="review-btn" id="statsToBoardBtn">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="1" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="8" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="8" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1.2"/></svg>
+            Review Game
+        </button>
+
+        <button class="stats-back-btn" id="statsBackBtn">← Games</button>
+
+        <!-- Player matchup header -->
+        <div class="matchup">
+            <div class="matchup-side left">
+                <span class="matchup-pip white"></span>
+                <span class="matchup-name" id="statsWhiteName">White</span>
+            </div>
+            <div class="matchup-result-block">
+                <span class="matchup-result" id="statsResult">vs</span>
+            </div>
+            <div class="matchup-side right">
+                <span class="matchup-name" id="statsBlackName">Black</span>
+                <span class="matchup-pip black"></span>
+            </div>
+        </div>
+
+        <!-- Analysing progress bar -->
+        <div class="analysing-bar" id="analysingBar">
+            <div class="analysing-fill" id="analysingFill"></div>
+        </div>
+        <div class="analysing-label" id="analysingLabel">Analysing…</div>
+
+        <!-- Stats body -->
+        <div class="stats-body">
+
+            <!-- ① Accuracy -->
+            <div class="stats-card">
+                <div class="stats-card-title">Accuracy</div>
+                <div class="acc-display">
+                    <div class="acc-side">
+                        <div class="acc-ring-wrap">
+                            <svg class="acc-ring" viewBox="0 0 80 80">
+                                <circle class="ring-track" cx="40" cy="40" r="32"/>
+                                <circle class="ring-fill white-ring" id="ringWhite" cx="40" cy="40" r="32"
+                                        stroke-dasharray="0 201" stroke-dashoffset="50"/>
+                            </svg>
+                            <span class="acc-number" id="statsAccWhite">—</span>
+                        </div>
+                        <span class="acc-player-name" id="accWhiteName">White</span>
+                    </div>
+                    <div class="acc-vs">vs</div>
+                    <div class="acc-side">
+                        <div class="acc-ring-wrap">
+                            <svg class="acc-ring" viewBox="0 0 80 80">
+                                <circle class="ring-track" cx="40" cy="40" r="32"/>
+                                <circle class="ring-fill black-ring" id="ringBlack" cx="40" cy="40" r="32"
+                                        stroke-dasharray="0 201" stroke-dashoffset="50"/>
+                            </svg>
+                            <span class="acc-number" id="statsAccBlack">—</span>
+                        </div>
+                        <span class="acc-player-name" id="accBlackName">Black</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ② Phase Accuracy -->
+            <div class="stats-card">
+                <div class="stats-card-title">Phase Accuracy</div>
+                <div class="phase-grid">
+                    <!-- header -->
+                    <div class="ph-row ph-header">
+                        <span class="ph-name"></span>
+                        <span class="ph-wlabel">White</span>
+                        <span class="ph-bar-col"></span>
+                        <span class="ph-blabel">Black</span>
+                    </div>
+                    <!-- Opening -->
+                    <div class="ph-row">
+                        <span class="ph-name">Opening</span>
+                        <span class="ph-wval" id="phOpenW">—</span>
+                        <div class="ph-bar-col">
+                            <div class="ph-dual-bar">
+                                <div class="ph-half left"><div class="ph-fill w-fill" id="phFillOpenW"></div></div>
+                                <div class="ph-half right"><div class="ph-fill b-fill" id="phFillOpenB"></div></div>
+                            </div>
+                        </div>
+                        <span class="ph-bval" id="phOpenB">—</span>
+                    </div>
+                    <!-- Middlegame -->
+                    <div class="ph-row">
+                        <span class="ph-name">Middlegame</span>
+                        <span class="ph-wval" id="phMidW">—</span>
+                        <div class="ph-bar-col">
+                            <div class="ph-dual-bar">
+                                <div class="ph-half left"><div class="ph-fill w-fill" id="phFillMidW"></div></div>
+                                <div class="ph-half right"><div class="ph-fill b-fill" id="phFillMidB"></div></div>
+                            </div>
+                        </div>
+                        <span class="ph-bval" id="phMidB">—</span>
+                    </div>
+                    <!-- Endgame -->
+                    <div class="ph-row">
+                        <span class="ph-name">Endgame</span>
+                        <span class="ph-wval" id="phEndW">—</span>
+                        <div class="ph-bar-col">
+                            <div class="ph-dual-bar">
+                                <div class="ph-half left"><div class="ph-fill w-fill" id="phFillEndW"></div></div>
+                                <div class="ph-half right"><div class="ph-fill b-fill" id="phFillEndB"></div></div>
+                            </div>
+                        </div>
+                        <span class="ph-bval" id="phEndB">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ③ Move Summary -->
+            <div class="stats-card">
+                <div class="stats-card-title">Move Summary</div>
+                <div class="summary-grid" id="summaryGrid">
+                    <!-- filled by JS: white count | icon+label | black count -->
+                </div>
+            </div>
+
+            <!-- ④ Game Info -->
+            <div class="stats-card">
+                <div class="stats-card-title">Game Info</div>
+                <div class="ginfo-grid">
+                    <div class="ginfo-row">
+                        <span class="ginfo-key">White</span>
+                        <span class="ginfo-val" id="ginfoWhite">—</span>
+                    </div>
+                    <div class="ginfo-row">
+                        <span class="ginfo-key">Black</span>
+                        <span class="ginfo-val" id="ginfoBlack">—</span>
+                    </div>
+                    <div class="ginfo-row">
+                        <span class="ginfo-key">Result</span>
+                        <span class="ginfo-val" id="ginfoResult">—</span>
+                    </div>
+                    <div class="ginfo-row">
+                        <span class="ginfo-key">Date</span>
+                        <span class="ginfo-val" id="ginfoDate">—</span>
+                    </div>
+                    <div class="ginfo-row">
+                        <span class="ginfo-key">Moves</span>
+                        <span class="ginfo-val" id="ginfoMoves">—</span>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /stats-body -->
+    </div>
+</div>
+
+<!-- ══════════════════════ SCREEN 4 · BOARD ANALYSIS -->
+<div class="screen hidden" id="screenAnalysis">
+    <!-- X button → back to stats -->
+    <button class="x-btn" id="boardToStatsBtn" title="Back to Report">✕</button>
+
+    <div class="analysis-layout">
+
+        <!-- LEFT: eval bar + board -->
+        <div class="board-col">
+            <div class="player-strip">
+                <span class="pdot black"></span>
+                <span class="pname" id="topPlayerName">Black</span>
+            </div>
+
+            <div class="board-row-wrap">
+                <!-- Eval bar -->
+                <div class="eval-bar" id="evalBar">
+                    <div class="eval-fill" id="evalFill"></div>
+                    <span class="eval-lbl top" id="evalLabelTop"></span>
+                    <span class="eval-lbl bot" id="evalLabelBot"></span>
+                </div>
+
+                <!-- Board -->
+                <div class="board-and-coords">
+                    <div class="rank-labels" id="rankLabels"></div>
+                    <div>
+                        <div class="board-container">
+                            <div id="board"></div>
+                            <svg id="arrowLayer" xmlns="http://www.w3.org/2000/svg"></svg>
+                        </div>
+                        <div class="file-labels" id="fileLabels"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="player-strip">
+                <span class="pdot white"></span>
+                <span class="pname" id="bottomPlayerName">White</span>
+            </div>
+
+            <div class="status-bar" id="statusBar">Load a game to begin</div>
+        </div>
+
+        <!-- RIGHT: move list + nav + detail -->
+        <div class="right-col">
+            <div class="panel-title">Moves</div>
+
+            <div class="move-list" id="moveList"></div>
+
+            <div class="nav-strip">
+                <button class="nav-btn" id="navStart">⇤</button>
+                <button class="nav-btn" id="navPrev">←</button>
+                <span class="nav-pos" id="navPos">—</span>
+                <button class="nav-btn" id="navNext">→</button>
+                <button class="nav-btn" id="navEnd">⇥</button>
+            </div>
+
+            <div class="move-detail" id="moveDetail" style="display:none">
+                <div class="md-header">
+                    <img class="md-icon" id="detailIcon" src="" alt="">
+                    <div>
+                        <div class="md-class" id="detailClass">—</div>
+                        <div class="md-eval"  id="detailEval">—</div>
+                    </div>
+                </div>
+                <div class="md-best" id="detailBest">—</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1887567551135148"
+     crossorigin="anonymous"></script>    
+<script src="../bganimation.js"></script>
+<script src="chess.min.js"></script>
+<script src="stockfish.js"></script>
+<script src="pgn.js"></script>
+<script src="gamesScreen.js"></script>
+<script src="statsScreen.js"></script>
+<script src="board.js"></script>
+<script src="openings.js"></script>
+<script src="movefeedback.js"></script>
+<script src="evalbar.js"></script>      
+<script src="analysis.js"></script>
+<script src="events.js"></script>
+<!-- Add to each page, after the <audio> element -->
+<audio id="bgMusic" loop>
+  <source src="../sounds/Aftertherain.mp3" type="audio/mpeg">
+</audio>
+<script src="../music-persist.js"></script>
+<script src="../online.js"></script>
+</body>
+</html>
