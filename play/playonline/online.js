@@ -39,11 +39,17 @@ let socket;
     });
 
     // ── Game is starting! ───────────────────────────────────────────────────
-    socket.on('game:start', ({ roomId, white, black }) => {
-      console.log(`🎮 Game starting! Room: ${roomId}, White: ${white}, Black: ${black}`);
-      localStorage.setItem('onlineRoom', JSON.stringify({ roomId, white, black }));
-      window.location.href = '/play/game.html';
-    });
+   socket.on('game:start', ({ roomId, white, black }) => {
+  const me = window.getUsername?.();
+  const myColor = me === white ? 'w' : 'b';
+  const opponentName = me === white ? black : white;
+
+  localStorage.setItem('onlineRoom', JSON.stringify({
+    roomId, white, black, myColor, opponentName
+  }));
+
+  window.location.href = '/play/game.html';
+});
 
     socket.connect();
   }
@@ -192,5 +198,32 @@ let socket;
   window._redChessOnline = { socket: () => socket };
 
   initSocket(); // ✅ THIS WAS MISSING — now socket actually starts!
+  // ── Apply online room data when game.html loads ──────────────────
+(function applyOnlineRoom() {
+  const room = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
+  if (!room.myColor || !room.roomId) return;
 
+  // Set color + flip board
+  window._botActive = true;
+  window._playerCol = room.myColor;
+  window._flipped   = room.myColor === 'b';
+
+  // Set opponent name in the nameplate
+  const nameEl = document.getElementById('opponentName');
+  const avatarEl = document.getElementById('opponentAvatar');
+  if (nameEl)   nameEl.textContent   = room.opponentName || 'Opponent';
+  if (avatarEl) avatarEl.textContent = '♟';
+
+  // Re-render board with correct orientation
+  if (typeof window.renderBoard === 'function') window.renderBoard();
+
+  // Fix board labels
+  const flipped = room.myColor === 'b';
+  const ranks = flipped ? ['1','2','3','4','5','6','7','8'] : ['8','7','6','5','4','3','2','1'];
+  const files = flipped ? ['h','g','f','e','d','c','b','a'] : ['a','b','c','d','e','f','g','h'];
+  const rl = document.getElementById('rankLabels');
+  const fl = document.getElementById('fileLabels');
+  if (rl) { rl.innerHTML = ''; ranks.forEach(r => { const s = document.createElement('span'); s.textContent = r; rl.appendChild(s); }); }
+  if (fl) { fl.innerHTML = ''; files.forEach(f => { const s = document.createElement('span'); s.textContent = f; fl.appendChild(s); }); }
+})();
 })();
