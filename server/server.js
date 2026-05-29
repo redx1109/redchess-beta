@@ -7,8 +7,6 @@
 //   • Game rooms (move sync, resign, draw)
 // ────────────────────────────────────────────────────────────────────────────
 // PUT THIS before all other routes
-
-});
 require('dotenv').config();
 const express   = require('express');
 const http      = require('http');
