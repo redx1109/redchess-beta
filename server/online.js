@@ -2,7 +2,7 @@
 // Include on every page AFTER username-popup.js
 // Handles: server connection, unique username check, matchmaking UI
 // ─────────────────────────────────────────────────────────────────────────────
-
+let socket;
 (function () {
   'use strict';
 
@@ -11,7 +11,6 @@
 
   // ── Load Socket.io client from server ────────────────────────────────────
   initSocket();
-  let socket;
 
   function initSocket() {
     socket = io(SERVER_URL, { autoConnect: false });
