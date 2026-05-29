@@ -3,7 +3,58 @@
    Matches the dark-gold chess aesthetic of game.css
 ═══════════════════════════════════════════════════════════ */
 
-/* ── Lobby Overlay ─────────────────────────────────────────────────────────── */
+/* ── Tab switcher ────────────────────────────────────────────────────────────── */
+
+.lobby-tabs {
+    display: flex;
+    gap: 0;
+    border: 1px solid #2a2218;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 2.4rem;
+}
+
+.lobby-tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #3a3020;
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    padding: 12px 32px;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+    position: relative;
+}
+
+.lobby-tab:first-child {
+    border-right: 1px solid #2a2218;
+}
+
+.lobby-tab:hover:not(.active) {
+    color: #c9a84c;
+    background: rgba(201,168,76,0.05);
+}
+
+.lobby-tab.active {
+    color: #c9a84c;
+    background: rgba(201,168,76,0.08);
+}
+
+.lobby-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: #c9a84c;
+}
+
+@media (max-width: 600px) {
+    .lobby-tab { padding: 11px 20px; font-size: 0.68rem; }
+}
+
+/* ── Tab switcher ────────────────────────────────────────────────────────────── */
 
 #lobbyOverlay {
     position: fixed;
