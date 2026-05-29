@@ -6,7 +6,12 @@
 //   • Random matchmaking queue
 //   • Game rooms (move sync, resign, draw)
 // ────────────────────────────────────────────────────────────────────────────
-
+// PUT THIS before all other routes
+app.use('/socket.io', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  next();
+});
 require('dotenv').config();
 const express   = require('express');
 const http      = require('http');
