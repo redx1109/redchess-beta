@@ -7,7 +7,7 @@
   'use strict';
 
   // ── Config — change this to your server URL ──────────────────────────────
-  const SERVER_URL = 'redchess-beta.up.railway.app'; // 👈 change to your deployed server URL
+  const SERVER_URL = 'https://redchess-beta.up.railway.app'; // 👈 change to your deployed server URL
 
   // ── Load Socket.io client from server ────────────────────────────────────
   const script  = document.createElement('script');
