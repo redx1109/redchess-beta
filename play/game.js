@@ -38,7 +38,7 @@ var _botCfg    = null;
 try { _botCfg = JSON.parse(localStorage.getItem('botSettings') || 'null'); } catch(e) {}
 var _botActive  = !!(_botCfg && _botCfg.active);
 var _playerCol  = _botActive ? (_botCfg.playerColor || 'w') : null;
-var _flipped    = _playerCol === 'b';   // flip board when player chose black
+var _flipped = window._flipped || (_playerCol === 'b');   // flip board when player chose black
 window._flipped = _flipped;
 
 // ─── Player name helpers ───────────────────────────────────────────────────────
