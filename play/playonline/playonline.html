@@ -427,20 +427,49 @@
 
         <a href="../bot-select.html" class="lobby-back">← Back</a>
 
-        <!-- ── Main menu ──────────────────────────────────────────────────── -->
-        <div class="lobby-view" id="viewMenu" style="display:flex">
+        <!-- ── Tab switcher ──────────────────────────────────────────────────── -->
+        <div class="lobby-tabs">
+            <button class="lobby-tab active" id="tabFindMatch" onclick="switchTab('findmatch')">Find Match</button>
+            <button class="lobby-tab" id="tabPlayFriend" onclick="switchTab('playfriend')">Play Friend</button>
+        </div>
+
+        <!-- ── Find Match view ───────────────────────────────────────────────── -->
+        <div class="lobby-view" id="viewFindMatch" style="display:flex">
+            <div class="lobby-title">Find Match</div>
+            <div class="lobby-subtitle">Get paired with a random opponent instantly</div>
+
+            <div class="lobby-cards" style="max-width:320px;">
+                <div class="lobby-card" style="align-items:center;">
+                    <div class="lobby-card-icon">⚔</div>
+                    <div class="lobby-card-title">Random Opponent</div>
+                    <p class="lobby-card-desc">Colors are assigned randomly. Game starts as soon as an opponent is found.</p>
+                    <button class="lobby-btn" id="btnStartMatch">START GAME</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Find Match searching view ─────────────────────────────────────── -->
+        <div class="lobby-view" id="viewSearching" style="display:none; flex-direction:column; align-items:center;">
+            <div class="lobby-title">Finding Opponent</div>
+            <div class="lobby-subtitle">Looking for someone to play against…</div>
+            <div class="lobby-waiting" style="margin-top:2.5rem;">
+                <div class="lobby-spinner"></div>
+                <div class="lobby-status" id="statusMatchmaking">Searching for opponent…</div>
+            </div>
+            <button class="lobby-btn lobby-btn-ghost" id="btnCancelMatch" style="margin-top:2.5rem; max-width:200px;">✕ CANCEL</button>
+        </div>
+
+        <!-- ── Play Friend view ───────────────────────────────────────────────── -->
+        <div class="lobby-view" id="viewPlayFriend" style="display:none">
             <div class="lobby-title">Play Online</div>
             <div class="lobby-subtitle">Challenge a friend across the board</div>
 
             <div class="lobby-cards">
-
                 <!-- Create card -->
                 <div class="lobby-card">
                     <div class="lobby-card-icon">♔</div>
                     <div class="lobby-card-title">Create Game</div>
-                    <p class="lobby-card-desc">
-                        Generate a code and share it with your friend. You'll play as White.
-                    </p>
+                    <p class="lobby-card-desc">Generate a code and share it with your friend. You'll play as White.</p>
                     <button class="lobby-btn" id="btnCreate">CREATE GAME</button>
                 </div>
 
@@ -450,9 +479,7 @@
                 <div class="lobby-card">
                     <div class="lobby-card-icon">♟</div>
                     <div class="lobby-card-title">Join Game</div>
-                    <p class="lobby-card-desc">
-                        Enter the code your friend shared to join their game. You'll play as Black.
-                    </p>
+                    <p class="lobby-card-desc">Enter the code your friend shared to join their game. You'll play as Black.</p>
                     <button class="lobby-btn lobby-btn-ghost" id="btnShowJoin">JOIN GAME</button>
                 </div>
             </div>
@@ -788,5 +815,39 @@
     <script src="../../username-popup.js"></script>
     <script src="../../mute-btn.js"></script>
     <script src="../../online.js"></script>
+    <!-- 7. Find Match + tab switching logic -->
+    <script>
+        function showLobbyView(id) {
+            ['viewFindMatch','viewSearching','viewPlayFriend','viewCreate','viewJoin']
+                .forEach(v => {
+                    const el = document.getElementById(v);
+                    if (el) el.style.display = 'none';
+                });
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'flex';
+        }
+
+        function switchTab(tab) {
+            document.getElementById('tabFindMatch').classList.toggle('active', tab === 'findmatch');
+            document.getElementById('tabPlayFriend').classList.toggle('active', tab === 'playfriend');
+            showLobbyView(tab === 'findmatch' ? 'viewFindMatch' : 'viewPlayFriend');
+        }
+
+        // Find Match — Start
+        document.getElementById('btnStartMatch').addEventListener('click', function () {
+            if (typeof joinMatchmaking !== 'function') {
+                alert('Server not connected. Make sure online.js is loaded!');
+                return;
+            }
+            showLobbyView('viewSearching');
+            joinMatchmaking();
+        });
+
+        // Find Match — Cancel
+        document.getElementById('btnCancelMatch').addEventListener('click', function () {
+            if (typeof leaveMatchmaking === 'function') leaveMatchmaking();
+            showLobbyView('viewFindMatch');
+        });
+    </script>
 </body>
 </html>
