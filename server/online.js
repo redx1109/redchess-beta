@@ -10,11 +10,7 @@
   const SERVER_URL = 'https://redchess-beta.up.railway.app'; // 👈 change to your deployed server URL
 
   // ── Load Socket.io client from server ────────────────────────────────────
-  const script  = document.createElement('script');
-  script.src    = SERVER_URL + '/socket.io/socket.io.js';
-  script.onload = initSocket;
-  document.head.appendChild(script);
-
+  initSocket();
   let socket;
 
   function initSocket() {
