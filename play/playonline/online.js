@@ -207,11 +207,6 @@ let socket;
     window._playerCol = room.myColor;
     window._flipped   = room.myColor === 'b';
 
-    const nameEl   = document.getElementById('opponentName');
-    const avatarEl = document.getElementById('opponentAvatar');
-    if (nameEl)   nameEl.textContent   = room.opponentName || 'Opponent';
-    if (avatarEl) avatarEl.textContent = '♟';
-
     if (typeof window.renderBoard === 'function') window.renderBoard();
 
     const flipped = room.myColor === 'b';
@@ -223,6 +218,10 @@ let socket;
     if (fl) { fl.innerHTML = ''; files.forEach(f => { const s = document.createElement('span'); s.textContent = f; fl.appendChild(s); }); }
 
     if (typeof window.updatePlayerBars === 'function') window.updatePlayerBars();
+    const nameEl   = document.getElementById('opponentName');
+    const avatarEl = document.getElementById('opponentAvatar');
+    if (nameEl)   nameEl.textContent   = room.opponentName || 'Opponent';
+    if (avatarEl) avatarEl.textContent = '♟';
 
     // ── Move sync ────────────────────────────────────────────────────────────
     let _onlineReceiving = false;
