@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../favicon.png">
+    <link rel="apple-touch-icon" href="../favicon.png">
+    <link rel="manifest" href="../manifest.json">
+    <title>RedChess</title>
+    
+    <!-- ✅ LCP FIX: preload board image ASAP from localStorage before any script runs -->
+    <script>
+    (function() {
+        try {
+            var s     = JSON.parse(localStorage.getItem('chessSettings') || '{}');
+            var theme = s.board || 'gold';
+            var link  = document.createElement('link');
+            link.rel  = 'preload';
+            link.as   = 'image';
+            link.href = '../../boards/' + theme + '.jpg';
+            link.setAttribute('fetchpriority', 'high');
+            document.head.appendChild(link);
+        } catch(e) {}
+    })();
+    </script>
+
+    <!-- ✅ LCP FIX: preload piece images ASAP so first renderBoard has them ready -->
+    <script>
+    (function() {
+        try {
+            var s      = JSON.parse(localStorage.getItem('chessSettings') || '{}');
+            var folder = s.piece || 'default';
+            var pieces = ['wP','wR','wN','wB','wQ','wK','bP','bR','bN','bB','bQ','bK'];
+            pieces.forEach(function(p) {
+                var link  = document.createElement('link');
+                link.rel  = 'preload';
+                link.as   = 'image';
+                link.href = '../../pieces/' + folder + '/' + p + '.png';
+                document.head.appendChild(link);
+            });
+        } catch(e) {}
+    })();
+    </script>
+
+    <link rel="stylesheet" href="game.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+    <style>
+        /* ── Chess clocks ── */
+        .clock {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            width: 100%;
+            padding: 5px 10px;
+            box-sizing: border-box;
+            font-family: 'Cinzel', serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            border-radius: 4px;
+            background: #111;
+            color: #888;
+            transition: background 0.2s, color 0.2s, opacity 0.2s;
+            letter-spacing: 0.05em;
+        }
+        .clock-active  { background: #2a2416; color: #f0d080; }
+        .clock-inactive { opacity: 0.45; }
+        .clock-low     { background: #5c1a1a !important; color: #ff6b6b !important; opacity: 1 !important; }
+        .clock-flagged { background: #7f0000 !important; color: #fff !important; opacity: 1 !important; }
+
+        /* Hide clocks entirely when no time control is active */
+        .clock[hidden] { display: none !important; }
+
+        /* ── PC fix: prevent text selection while dragging pieces ── */
+        #board,
+        #board *,
+        #arrowLayer {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+
+        /* ── Opponent nameplate ── */
+        .opponent-nameplate {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 2px 4px;
+            font-family: 'Cinzel', serif;
+            width: 100%;
+        }
+        .opponent-avatar { font-size: 18px; line-height: 1; }
+        .opponent-name {
+            color: #f0c84c;
+            font-size: 13px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-shadow: 0 0 14px rgba(240, 200, 76, 0.55);
+            font-weight: 600;
+        }
+        .opponent-elo {
+            margin-left: auto;
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            color: #7a6130;
+            white-space: nowrap;
+            padding: 2px 6px;
+            border: 1px solid #2e2a22;
+            border-radius: 3px;
+            background: rgba(201,168,76,0.06);
+        }
+
+        /* Mobile analyze button — hidden on desktop only */
+        @media (min-width: 701px) {
+            .analyze-btn--mobile { display: none !important; }
+        }
+
+        /* Mobile history nav — hidden on desktop */
+        .mobile-nav {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            width: 96vw;
+            margin: 0 auto;
+        }
+        .mobile-nav .nav-btn {
+            width: 34px;
+            height: 30px;
+            flex: 0 0 auto;
+            background: transparent;
+            border: 1px solid #2e2a22;
+            border-radius: 3px;
+            color: #6b6352;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .mobile-nav .nav-btn:active {
+            color: #c9a84c;
+            border-color: #c9a84c;
+        }
+
+        /* ════════════════════════════════════════════
+           MOBILE layout  <= 700 px
+           Desktop (game.css) is completely unchanged.
+        ════════════════════════════════════════════ */
+        @media (max-width: 700px) {
+
+            body {
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+
+            .back-btn {
+                position: fixed;
+                top: 0.75rem;
+                left: 0.9rem;
+                z-index: 50;
+                font-size: 14px;
+            }
+            .turn-indicator {
+                position: fixed;
+                top: 0.75rem;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 50;
+                font-size: 12px;
+                white-space: nowrap;
+            }
+            .resign-btn {
+                position: fixed;
+                top: 0.6rem;
+                right: 0.9rem;
+                z-index: 50;
+                font-size: 11px;
+                padding: 6px 12px;
+            }
+
+            .game-layout {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                gap: 1rem !important;
+                padding-top: 48px !important;
+                padding-bottom: 24px !important;
+                width: 100vw !important;
+                min-height: 100vh !important;
+                box-sizing: border-box;
+            }
+
+            .board-wrap {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                width: 96vw !important;
+                max-width: 96vw !important;
+                gap: 4px !important;
+            }
+
+            .board-col {
+                display: flex !important;
+                flex-direction: column !important;
+                flex: 1 !important;
+            }
+
+            .board-container {
+                width: 100% !important;
+                aspect-ratio: 1 / 1 !important;
+                position: relative !important;
+            }
+            #board {
+                width: 100% !important;
+                height: 100% !important;
+            }
+            #arrowLayer {
+                position: absolute !important;
+                inset: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                pointer-events: none;
+            }
+
+            .rank-labels {
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-around !important;
+                align-self: stretch !important;
+                width: 18px !important;
+                font-size: 10px !important;
+                text-align: center !important;
+            }
+
+            .file-labels {
+                display: flex !important;
+                justify-content: space-around !important;
+                width: 100% !important;
+                font-size: 10px !important;
+                padding: 2px 0 !important;
+            }
+
+            /* Nav bar shown on mobile */
+            .mobile-nav {
+                display: flex !important;
+            }
+
+            /* Move panel: rises to just below the status bar */
+            .move-panel {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 96vw !important;
+                max-height: none !important;
+                gap: 0 !important;
+                order: -1;          /* float above board in flex-column layout */
+                margin-top: -4px !important;
+            }
+            .panel-label { display: none !important; }
+            .move-log {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+                max-height: 40px !important;
+                min-height: 40px;
+                align-items: center;
+                padding: 0 8px !important;
+                gap: 0 !important;
+                background: #1a1815;
+                border-radius: 3px;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+            .move-log::-webkit-scrollbar { display: none; }
+            .move-entry {
+                display: inline-flex !important;
+                flex-direction: row !important;
+                grid-template-columns: unset !important;
+                align-items: center !important;
+                gap: 0 !important;
+                padding: 0 1px !important;
+                border-bottom: none !important;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+            .move-num  { font-size: 11px !important; color: #6b6352; padding: 0 2px 0 6px !important; }
+            .move-w, .move-b { font-size: 13px !important; padding: 3px 4px !important; border-radius: 3px; }
+
+            .clock { font-size: 1rem; padding: 4px 8px; }
+
+            /* Desktop analyze btn (inside move-panel) — always hidden on mobile */
+            #analyzeBtn { display: none !important; }
+
+            /* Mobile analyze button — shown on game over, sits below board */
+            .analyze-btn--mobile {
+                width: 96vw !important;
+                max-width: 96vw !important;
+                padding: 14px 0 !important;
+                font-size: 11px !important;
+                margin-top: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-texture"></div>
+
+    <!-- ── Background animation canvas ── -->
+    <canvas id="c" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
+
+    <a href="../index.html" class="back-btn"> <-Back</a>
+    <div class="turn-indicator" id="turnIndicator">White's Turn</div>
+    <button class="resign-btn" id="resignBtn" onclick="resignGame()">Resign</button>
+
+
+    <main class="game-layout">
+
+        <!-- Board + labels -->
+        <div class="board-wrap">
+            <div class="rank-labels" id="rankLabels"></div>
+            <div class="board-col">
+                <div class="opponent-nameplate" id="opponentNameplate">
+                    <span class="opponent-avatar" id="opponentAvatar"></span>
+                    <span class="opponent-name" id="opponentName"></span>
+                    <span class="opponent-elo" id="opponentElo"></span>
+                </div>
+                <div id="clock-b" class="clock clock-inactive"><span id="clock-b-time">5:00</span></div>
+                <div class="board-container" id="boardContainer">
+                    <div id="board"></div>
+                    <svg id="arrowLayer" xmlns="http://www.w3.org/2000/svg"></svg>
+                </div>
+                <div class="file-labels" id="fileLabels"></div>
+                <div id="clock-w" class="clock clock-inactive"><span id="clock-w-time">5:00</span></div>
+            </div>
+        </div>
+
+        <!-- Move history -->
+        <div class="move-panel">
+            <div class="panel-label">Move History</div>
+            <div class="move-log" id="moveLog"></div>
+            <!-- Analyze button inside panel — anchors to bottom on PC -->
+            <button class="analyze-btn" id="analyzeBtn" onclick="location.href='../analysis/analysis.html'">Analyze Game</button>
+        </div>
+
+        <!-- Mobile nav: ◀  (space)  ▶ — hidden on desktop via CSS -->
+        <div class="mobile-nav" id="mobileNav">
+            <button class="nav-btn" id="navPrevBtn" onclick="mobileNavPrev()" title="Previous move">◀</button>
+            <button class="nav-btn" id="navNextBtn" onclick="mobileNavNext()" title="Next move">▶</button>
+        </div>
+
+        <!-- Mobile-only analyze button shown on game over -->
+        <button class="analyze-btn analyze-btn--mobile" id="analyzeBtnMobile" onclick="location.href='../analysis/analysis.html'" style="display:none;">Analyze Game</button>
+    </main>
+
+    <!-- 1. bots.js first — defines BOTS, activateBot, getBotById -->
+    <script src="bots.js"></script>
+    <!-- 2. game.js (defines board state, _flipped, renderBoard, applyMove, askEngine stub) -->
+    <script src="moveanimation.js"></script>
+    <script src="game.js"></script>
+    <script src="movelogic.js"></script>
+    <script>
+        // ── Rank & file labels ─────────────────────────────────────────────────
+        const ranks = _flipped ? ['1','2','3','4','5','6','7','8']
+                               : ['8','7','6','5','4','3','2','1'];
+        const files = _flipped ? ['h','g','f','e','d','c','b','a']
+                               : ['a','b','c','d','e','f','g','h'];
+        const rl = document.getElementById('rankLabels');
+        const fl = document.getElementById('fileLabels');
+        ranks.forEach(r => { const s = document.createElement('span'); s.textContent = r; rl.appendChild(s); });
+        files.forEach(f => { const s = document.createElement('span'); s.textContent = f; fl.appendChild(s); });
+
+        // ── Mobile nav ─────────────────────────────────────────────────────────
+        function updateLiveBtn() {
+            // Auto-scroll active move into view in the horizontal strip
+            setTimeout(() => {
+                const active = document.querySelector('#moveLog .active-move');
+                if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }, 30);
+        }
+
+        function mobileNavFirst() {
+            if (posHistory.length > 0) goToGameMove(0);
+            updateLiveBtn();
+        }
+
+        function mobileNavPrev() {
+            if (viewIdx === -1) {
+                // step back one from live game
+                if (posHistory.length >= 2) goToGameMove(posHistory.length - 2);
+            } else if (viewIdx > 0) {
+                goToGameMove(viewIdx - 1);
+            }
+            updateLiveBtn();
+        }
+
+        function mobileNavNext() {
+            if (viewIdx === -1) return; // already live, nothing to do
+            if (viewIdx < posHistory.length - 1) {
+                goToGameMove(viewIdx + 1);
+            } else {
+                // at the last historical move — go back to live
+                exitHistory();
+            }
+            updateLiveBtn();
+        }
+
+        function mobileNavLast() {
+            exitHistory();
+            updateLiveBtn();
+        }
+
+        // Keep legacy alias in case anything calls mobileNavLive
+        function mobileNavLive() { mobileNavLast(); }
+
+        // ── Auto-scroll: watch for active-move class changes in the move log ──
+        (function () {
+            const ml = document.getElementById('moveLog');
+            if (!ml) return;
+            const obs = new MutationObserver(() => {
+                const active = ml.querySelector('.active-move');
+                if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            });
+            obs.observe(ml, { attributes: true, subtree: true, attributeFilter: ['class'] });
+        })();
+
+        // ── Mirror desktop analyzeBtn → analyzeBtnMobile on mobile ──────────
+        (function () {
+            const desktopBtn = document.getElementById('analyzeBtn');
+            const mobileBtn  = document.getElementById('analyzeBtnMobile');
+            if (!desktopBtn || !mobileBtn) return;
+            const sync = () => {
+                const shown = desktopBtn.style.display && desktopBtn.style.display !== 'none';
+                mobileBtn.style.display = shown ? 'block' : 'none';
+            };
+            new MutationObserver(sync).observe(desktopBtn, { attributes: true, attributeFilter: ['style'] });
+        })();
+
+        // ── Right-click: highlights & arrows ──────────────────────────────────
+        const boardEl2   = document.getElementById('board');
+        const arrowLayer = document.getElementById('arrowLayer');
+        let rightDragFrom      = null;
+        let highlightedSquares = new Set();
+        let arrows             = [];
+
+        function getSquareFromEvent(e) {
+            const el = document.elementFromPoint(e.clientX, e.clientY);
+            if (!el) return null;
+            const sq = el.closest('.square');
+            if (!sq) return null;
+            return { row: parseInt(sq.dataset.row), col: parseInt(sq.dataset.col) };
+        }
+
+        function squareCenter(row, col) {
+            const rect = boardEl2.getBoundingClientRect();
+            const sqW = rect.width  / 8;
+            const sqH = rect.height / 8;
+            const dc  = _flipped ? 7 - col : col;
+            const dr  = _flipped ? 7 - row : row;
+            return { x: dc * sqW + sqW / 2, y: dr * sqH + sqH / 2 };
+        }
+
+        function drawArrows() {
+            arrowLayer.innerHTML = '';
+            const rect     = boardEl2.getBoundingClientRect();
+            const sqW      = rect.width  / 8;
+            const sqH      = rect.height / 8;
+            const headSize = Math.min(sqW, sqH) * 0.28;
+
+            const defs   = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+            marker.setAttribute('id',           'arrowhead');
+            marker.setAttribute('markerWidth',  '4');
+            marker.setAttribute('markerHeight', '4');
+            marker.setAttribute('refX',         '2.5');
+            marker.setAttribute('refY',         '2');
+            marker.setAttribute('orient',       'auto');
+            const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            poly.setAttribute('points', '0 0, 4 2, 0 4');
+            poly.setAttribute('fill',   'rgba(255,170,0,0.85)');
+            marker.appendChild(poly);
+            defs.appendChild(marker);
+            arrowLayer.appendChild(defs);
+
+            for (const { fr, fc, tr, tc } of arrows) {
+                if (fr === tr && fc === tc) continue;
+                const from = squareCenter(fr, fc);
+                const to   = squareCenter(tr, tc);
+                const dx   = to.x - from.x;
+                const dy   = to.y - from.y;
+                const len  = Math.sqrt(dx*dx + dy*dy);
+                const ux   = dx / len;
+                const uy   = dy / len;
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', from.x);
+                line.setAttribute('y1', from.y);
+                line.setAttribute('x2', to.x - ux * headSize * 0.8);
+                line.setAttribute('y2', to.y - uy * headSize * 0.8);
+                line.setAttribute('stroke',           'rgba(255,170,0,0.85)');
+                line.setAttribute('stroke-width',     Math.min(sqW, sqH) * 0.14);
+                line.setAttribute('stroke-linecap',   'round');
+                line.setAttribute('marker-end',       'url(#arrowhead)');
+                arrowLayer.appendChild(line);
+            }
+        }
+
+        function applyHighlights() {
+            document.querySelectorAll('.square').forEach(sq => {
+                const key = `${sq.dataset.row},${sq.dataset.col}`;
+                sq.classList.toggle('right-highlight', highlightedSquares.has(key));
+            });
+        }
+
+        boardEl2.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('contextmenu', e => {
+            if (e.target.closest('#board') || e.target.closest('#arrowLayer')) e.preventDefault();
+        });
+
+        document.addEventListener('mousedown', e => {
+            if (e.button !== 2) return;
+            const sq = getSquareFromEvent(e);
+            if (!sq) return;
+            rightDragFrom = sq;
+        });
+
+        document.addEventListener('mouseup', e => {
+            if (e.button !== 2) return;
+            if (!rightDragFrom) return;
+            const sq = getSquareFromEvent(e);
+            if (!sq) { rightDragFrom = null; return; }
+            const { row: fr, col: fc } = rightDragFrom;
+            const { row: tr, col: tc } = sq;
+            rightDragFrom = null;
+            if (fr === tr && fc === tc) {
+                const key = `${fr},${fc}`;
+                highlightedSquares.has(key) ? highlightedSquares.delete(key) : highlightedSquares.add(key);
+                applyHighlights();
+            } else {
+                const idx = arrows.findIndex(a => a.fr===fr && a.fc===fc && a.tr===tr && a.tc===tc);
+                idx >= 0 ? arrows.splice(idx, 1) : arrows.push({ fr, fc, tr, tc });
+                drawArrows();
+            }
+        });
+
+        document.addEventListener('mousedown', e => {
+            if (e.button !== 0) return;
+            if (e.target.closest('#board') || e.target.closest('#arrowLayer')) {
+                e.preventDefault();
+            }
+            highlightedSquares.clear();
+            arrows = [];
+            applyHighlights();
+            drawArrows();
+        });
+    </script>
+
+    <!-- 2. engine.js last — reads globals from game.js, replaces window.askEngine -->
+    <script src="engine.js"></script>
+
+    <!-- ── Bot bar init ── -->
+    <script>
+        (function () {
+            if (!window._botActive || !window._botCfg) return;
+            const bot = typeof getBotById === 'function'
+                ? getBotById(window._botCfg.botId)
+                : null;
+            if (!bot) return;
+
+            const bar   = document.getElementById('botBar');
+            const color = window._playerCol === 'w' ? 'Black' : 'White';
+
+            const botAvatarEl  = document.getElementById('botAvatar');
+            const botBarNameEl = document.getElementById('botBarName');
+            const botBarSubEl  = document.getElementById('botBarSub');
+            if (botAvatarEl)  botAvatarEl.textContent  = bot.avatar;
+            if (botBarNameEl) botBarNameEl.textContent = `${bot.name} — Playing ${color}`;
+            if (botBarSubEl)  botBarSubEl.textContent  = `${bot.title}  ·  ~${bot.elo} ELO`;
+
+            // Populate opponent nameplate above the board
+            const avatarEl = document.getElementById('opponentAvatar');
+            const nameEl   = document.getElementById('opponentName');
+            if (avatarEl) avatarEl.textContent = bot.avatar;
+            if (nameEl)   nameEl.textContent   = bot.name;
+            const eloEl = document.getElementById('opponentElo');
+            if (eloEl)    eloEl.textContent    = `~${bot.elo}`;
+
+            // difficulty pips (10 total, filled up to bot.difficulty)
+            const pips = document.getElementById('botBarPips');
+            if (pips) {
+                for (let i = 1; i <= 10; i++) {
+                    const pip = document.createElement('span');
+                    pip.className = 'bot-bar__pip' + (i <= bot.difficulty ? ' lit' : '');
+                    pips.appendChild(pip);
+                }
+            }
+
+            if (bar) bar.classList.add('active');
+        })();
+    </script>
+
+    <!-- ── Bot first move: if player chose Black, engine must go first ── -->
+    <script>
+        (function () {
+            if (!window._botActive || window.gameOver) return;
+            // Bot's turn = it's currently White's turn but the player is Black
+            if (window.turn !== window._playerCol) {
+                setTimeout(function () {
+                    if (typeof askEngine === 'function') askEngine();
+                }, 400); // small delay so the board finishes rendering
+            }
+        })();
+    </script>
+    <!-- ── Hide clocks when time control is off ── -->
+    <script>
+        (function () {
+            var tc = null;
+            try { tc = JSON.parse(localStorage.getItem('timeControl') || 'null'); } catch(e) {}
+            if (!tc || !tc.active) {
+                var cb = document.getElementById('clock-b');
+                var cw = document.getElementById('clock-w');
+                if (cb) cb.hidden = true;
+                if (cw) cw.hidden = true;
+            }
+        })();
+    </script>
+    <script src="timecontrol.js"></script> 
+    <!-- ── Background animation ── -->
+    <script src="../bganimation.js"></script>
+<audio id="bgMusic" loop>
+  <source src="../sounds/Aftertherain.mp3" type="audio/mpeg">
+</audio>
+<script src="../music-persist.js"></script>
+<script src="../mute-btn.js"></script>
+<script src="../username-popup.js"></script>
+<script src="../online.js"></script>
+</body>
+</html>

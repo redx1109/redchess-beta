@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings — Red Chess</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+    <link rel="icon" href="../favicon.png">
+    <link rel="apple-touch-icon" href="../favicon.png">
+    <link rel="manifest" href="../manifest.json">
+    <style>
+        @import "settings.css";
+
+        /* ── Username input styling (matches your existing selects) ── */
+        #usernameField {
+            width: 100%;
+            box-sizing: border-box;
+            background: #252525;
+            border: 1.5px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            padding: 10px 13px;
+            outline: none;
+            font-family: sans-serif;
+            transition: border-color 0.2s;
+        }
+        #usernameField:focus     { border-color: rgba(192,57,43,0.6); }
+        #usernameField::placeholder { color: rgba(255,255,255,0.25); }
+        .username-saved-hint {
+            font-size: 11px;
+            color: rgba(255,255,255,0.3);
+            margin-top: 6px;
+            font-family: sans-serif;
+            min-height: 16px;
+            transition: color 0.3s;
+        }
+        .username-saved-hint.saved { color: #2ecc71; }
+    </style>
+</head>
+<body>
+    <div class="bg-texture"></div>
+
+    <header class="top-bar">
+        <a href="../index.html" class="back-btn">← Back</a>
+        <div class="title-block">
+            <span>⚙</span>
+            <h1>Settings</h1>
+        </div>
+        <div style="width:60px"></div>
+    </header>
+
+    <main>
+        <!-- ── Username ── -->
+        <div class="settings-section">
+            <div class="section-label">Username</div>
+            <div class="select-row">
+                <input type="text" id="usernameField" maxlength="20"
+                    placeholder="Enter your name..." autocomplete="off" />
+            </div>
+            <div class="username-saved-hint" id="usernameHint">
+                This name shows on the board during games
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="section-label">Boards</div>
+            <div id="boardPicker"></div>
+        </div>
+
+        <div class="settings-section">
+            <div class="section-label">Pieces</div>
+            <div class="select-row">
+                <select id="pieceStyle"></select>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="section-label">Move Type</div>
+            <div class="select-row">
+                <select id="moveStyle"></select>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="section-label">Board Shadow</div>
+            <div class="select-row">
+                <select id="boardShadow"></select>
+            </div>
+        </div>
+
+        <div class="save-row">
+            <button id="saveBtn" onclick="saveSettings()">Save Settings</button>
+        </div>
+    </main>
+
+    <audio id="bgMusic" loop>
+        <source src="../sounds/Aftertherain.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="../music-persist.js"></script>
+    <script src="../mute-btn.js"></script>      <!-- ← NEW: mute button -->
+    <script src="settings.js"></script>
+
+    <script>
+        // ── Username field: load saved value & wire up live save ──────────────────
+        (function () {
+            const field = document.getElementById('usernameField');
+            const hint  = document.getElementById('usernameHint');
+            if (!field) return;
+
+            // Populate from localStorage on load
+            field.value = localStorage.getItem('chessUsername') || '';
+
+            let _hintTimer = null;
+
+            function showSaved() {
+                hint.textContent = '✓ Username saved!';
+                hint.classList.add('saved');
+                clearTimeout(_hintTimer);
+                _hintTimer = setTimeout(() => {
+                    hint.textContent = 'This name shows on the board during games';
+                    hint.classList.remove('saved');
+                }, 2200);
+            }
+
+            // Save on every keystroke (debounced)
+            let _debounce = null;
+            field.addEventListener('input', () => {
+                clearTimeout(_debounce);
+                _debounce = setTimeout(() => {
+                    const v = field.value.trim();
+                    if (v) {
+                        localStorage.setItem('chessUsername', v);
+                        showSaved();
+                    }
+                }, 600);
+            });
+
+            // Also save immediately on Enter
+            field.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    clearTimeout(_debounce);
+                    const v = field.value.trim();
+                    if (v) { localStorage.setItem('chessUsername', v); showSaved(); }
+                }
+            });
+        })();
+    </script>
+    <script src="../online.js"></script>
+</body>
+</html>
