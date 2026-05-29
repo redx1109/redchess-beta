@@ -142,7 +142,7 @@ function applyMove(fromRow, fromCol, toRow, toCol) {
 
     // capture (read before overwriting)
     const captured = boardState[toRow][toCol];
-    const notation = toAlgebraic(boardState, piece, fromRow, fromCol, toRow, toCol, captured, isCastle); 
+    let notation = toAlgebraic(boardState, piece, fromRow, fromCol, toRow, toCol, captured, isCastle); 
     // castling — move the rook
     if (ptype === 'K') {
         const backRow = color === 'w' ? 7 : 0;
