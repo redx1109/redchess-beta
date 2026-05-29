@@ -37,7 +37,7 @@ let fetchedGames = [];
 let totalPlies   = 0;
 
 const S           = JSON.parse(localStorage.getItem("chessSettings") || "{}");
-const boardTheme  = S.board || "green";
+const boardTheme  = S.board || "gold";
 const pieceFolder = S.piece || "default";
 
 // ─── Screen management ────────────────────────────────────────────────────────
