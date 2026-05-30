@@ -3,19 +3,22 @@
 // Load order in HTML:
 //   bots.js → moveanimation.js → persistence.js → game.js → movelogic.js → engine.js
 // ──────────────────────────────────────────────────────────────────────────────
-
+// ─── Clear stale online room if this is a bot game ────────────────────────────
+if (_botActive && _botCfg && _botCfg.botId) {
+    localStorage.removeItem('onlineRoom');
+}
 // ─── Bot config (read from localStorage after bots.js activateBot) ─────────────
 
 var _botCfg    = null;
 try { _botCfg = JSON.parse(localStorage.getItem('botSettings') || 'null'); } catch(e) {}
 var _botActive  = !!(_botCfg && _botCfg.active);
 var _playerCol  = _botActive ? (_botCfg.playerColor || 'w') : null;
-var _flipped    = window._flipped || (_playerCol === 'b');
+var _flipped = (_playerCol === 'b');
+window._flipped = _flipped;
 
 window._botCfg    = _botCfg;
 window._botActive = _botActive;
 window._playerCol = _playerCol;
-window._flipped   = _flipped;
 
 // ─── Low-end device detection ──────────────────────────────────────────────────
 
