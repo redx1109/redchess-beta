@@ -45,7 +45,7 @@ let socket;
         localStorage.setItem('onlineRoom', JSON.stringify({
             roomId, white, black, myColor, opponentName
         }));
-        window.location.href = '../play/game.html';
+        window.location.href = '../game.html';
         // ✅ REMOVED :move from here!
     });
 
