@@ -1,12 +1,3 @@
-// ─── Multiplayer Socket ────────────────────────────────────────────────────
-let roomId   = null;
-let myColor  = null; // 'w' or 'b' — assigned by server on game:start
-
-socket.on('connect', () => {
-    const username = (typeof getUsername === 'function' && getUsername()) || null;
-    if (username) socket.emit('player:online', { username });
-});
-
 // Server tells us the game started + which color we are
 socket.on('game:start', ({ roomId: rid, white, black }) => {
     roomId  = rid;
