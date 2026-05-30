@@ -3,7 +3,7 @@
   "name": "beta",
   "compatibility_date": "2026-05-13",
   "observability": {
-    "enabled": true
+    "enabled": true,
     "head_sampling_rate": 1,
     "logs": {
       "enabled": true,
