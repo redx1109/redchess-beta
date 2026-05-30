@@ -160,6 +160,19 @@ let socket;
     const room = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
     if (!room.myColor || !room.roomId) return;
 
+    // Rejoin the room with new socket connection ✅
+    socket.on('connect', () => {
+        const username = window.getUsername?.() || '';
+        if (username) {
+            socket.emit('player:online', { username });
+            socket.emit('game:rejoin', { roomId: room.roomId, username });
+        }
+    });
+    if (socket.connected) {
+        const username = window.getUsername?.() || '';
+        socket.emit('player:online', { username });
+        socket.emit('game:rejoin', { roomId: room.roomId, username });
+    }
     // FIX 2 — set opponent name AFTER updatePlayerBars so it isn't overwritten
     if (typeof window.updatePlayerBars === 'function') window.updatePlayerBars();
     const nameEl   = document.getElementById('opponentName');
