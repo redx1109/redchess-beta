@@ -1090,5 +1090,6 @@ window.addEventListener('load', () => {
         if (isMobile() && _blockingSwipe) { _blockingSwipe = false; return; }
         _origGoToGameMove(idx);
     };
-
+window.applyMove  = applyMove;
+window.renderBoard = renderBoard;
 })();
