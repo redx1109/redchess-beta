@@ -115,35 +115,9 @@ boardEl.addEventListener("click", (e) => {
     if (!sq) return;
     handleClick(parseInt(sq.dataset.row), parseInt(sq.dataset.col));
 });
-
- // ── WebSocket setup ──────────────────────────────────
-const socket = new WebSocket("wss://your-railway-url");
-
-socket.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    if (data.type === "move") {
-        applyMove(data.fromRow, data.fromCol, data.toRow, data.toCol);
-    }
-};
-
-// Call this inside applyMove() right at the top, BEFORE applying locally
-function sendMove(fromRow, fromCol, toRow, toCol) {
-    if (socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-            type: "move", fromRow, fromCol, toRow, toCol
-        }));
-    }
-}
 // ─── Apply a move ──────────────────────────────────────────────────────────────
 
-function applyMove(fromRow, fromCol, toRow, toCol, fromRemote = false) {
-     if (!fromRemote && roomId) {
-        socket.emit('game:move', {
-            roomId,
-            move: { fromRow, fromCol, toRow, toCol },
-            fen: null // you can add FEN later, server stores it
-        });
-    }
+function applyMove(fromRow, fromCol, toRow, toCol) {
     clearCheck();
     const piece  = boardState[fromRow][fromCol];
     if (!fromRemote) sendMove(fromRow, fromCol, toRow, toCol);
