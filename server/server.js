@@ -131,7 +131,9 @@ io.on('connection', (socket) => {
     if (!from || !to) return;
 
     const roomId = [from, to].sort().join('_') + '_' + Date.now();
-    const room   = { white: from, black: to, fen: 'start', moves: [] };
+    const white = Math.random() < 0.5 ? from : to;
+    const black = white === from ? to : from;
+    const room  = { white, black, fen: 'start', moves: [] };
     activeRooms.set(roomId, room);
 
     // Put both players in the room
@@ -142,7 +144,7 @@ io.on('connection', (socket) => {
     }
     socket.join(roomId);
 
-    io.to(roomId).emit('game:start', { roomId, white: from, black: to });
+    io.to(roomId).emit('game:start', { roomId, white, black });
     console.log(`🎮 Game started: ${roomId}`);
   });
 
@@ -195,6 +197,18 @@ io.on('connection', (socket) => {
   socket.on('game:move', ({ roomId, move, fen }) => {
     const room = activeRooms.get(roomId);
     if (!room) return;
+    socket.on('game:move', ({ roomId, move, fen }) => {
+    const room = activeRooms.get(roomId);
+    if (!room) {
+        console.log('❌ room not found:', roomId);
+        console.log('active rooms:', [...activeRooms.keys()]);
+        return;
+    }
+    room.fen = fen;
+    room.moves.push(move);
+    socket.to(roomId).emit('game:move', { move, fen });
+    console.log('✅ move synced in room:', roomId);
+});
     room.fen = fen;
     room.moves.push(move);
     // Broadcast move to the OTHER player in the room
