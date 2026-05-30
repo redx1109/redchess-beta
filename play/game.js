@@ -1,8 +1,49 @@
 // ─── game.js ───────────────────────────────────────────────────────────────────
 // Core game state, rendering, drag/click input, and startup.
 // Load order in HTML:
-//   bots.js → moveanimation.js → bot.js → persistence.js → game.js → movelogic.js → engine.js
+//   bots.js → moveanimation.js → persistence.js → game.js → movelogic.js → engine.js
 // ──────────────────────────────────────────────────────────────────────────────
+
+// ─── Bot config (read from localStorage after bots.js activateBot) ─────────────
+
+var _botCfg    = null;
+try { _botCfg = JSON.parse(localStorage.getItem('botSettings') || 'null'); } catch(e) {}
+var _botActive  = !!(_botCfg && _botCfg.active);
+var _playerCol  = _botActive ? (_botCfg.playerColor || 'w') : null;
+var _flipped    = window._flipped || (_playerCol === 'b');
+
+window._botCfg    = _botCfg;
+window._botActive = _botActive;
+window._playerCol = _playerCol;
+window._flipped   = _flipped;
+
+// ─── Low-end device detection ──────────────────────────────────────────────────
+
+var _isLowEnd = !!(
+    (navigator.hardwareConcurrency != null && navigator.hardwareConcurrency <= 2) ||
+    (navigator.deviceMemory        != null && navigator.deviceMemory        <= 2)
+);
+window._isLowEnd = _isLowEnd;
+
+// ─── Player name helpers ───────────────────────────────────────────────────────
+
+function _getPlayerName(color) {
+    const me      = (typeof getUsername === 'function' && getUsername()) || 'Player';
+    const botName = (typeof getBotName  === 'function' && getBotName())  || 'Bot';
+    if (_botActive) return color === _playerCol ? me : botName;
+    return color === 'w' ? me : 'Opponent';
+}
+
+function _fixBotOpponentName() {
+    if (!_botActive || !_botCfg) return;
+    const bot      = (typeof getBotById === 'function') ? getBotById(_botCfg.botId) : null;
+    const nameEl   = document.getElementById('opponentName');
+    const avatarEl = document.getElementById('opponentAvatar');
+    const eloEl    = document.getElementById('opponentElo');
+    if (nameEl)   nameEl.textContent   = bot ? bot.name   : 'Bot';
+    if (avatarEl) avatarEl.textContent = bot ? bot.avatar : '🤖';
+    if (eloEl)    eloEl.textContent    = bot ? `~${bot.elo}` : '';
+}
 
 // ─── Game state ────────────────────────────────────────────────────────────────
 
