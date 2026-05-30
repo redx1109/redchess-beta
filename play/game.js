@@ -1008,4 +1008,3 @@ window.addEventListener('load', () => {
 // Click calls (from the move log) are unaffected because they don't set the flag.
 window.applyMove  = applyMove;
 window.renderBoard = renderBoard;
-})();
