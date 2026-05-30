@@ -120,7 +120,6 @@ boardEl.addEventListener("click", (e) => {
 function applyMove(fromRow, fromCol, toRow, toCol) {
     clearCheck();
     const piece  = boardState[fromRow][fromCol];
-    if (!fromRemote) sendMove(fromRow, fromCol, toRow, toCol);
     if (!piece) {
         console.error(`[applyMove] no piece at (${fromRow},${fromCol}) — move ignored`);
         return;
