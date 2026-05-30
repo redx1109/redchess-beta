@@ -188,13 +188,6 @@ let socket;
     const avatarEl = document.getElementById('opponentAvatar');
     if (nameEl)   nameEl.textContent   = room.opponentName || 'Opponent';
     if (avatarEl) avatarEl.textContent = '♟';
-
-    if (typeof window.updatePlayerBars === 'function') window.updatePlayerBars();
-const nameEl   = document.getElementById('opponentName');
-const avatarEl = document.getElementById('opponentAvatar');
-if (nameEl)   nameEl.textContent   = room.opponentName || 'Opponent';
-if (avatarEl) avatarEl.textContent = '♟';
-
 // ✅ ADD EVERYTHING BELOW HERE ↓
 const myName = window.getUsername?.() || localStorage.getItem('chessUsername') || 'You';
 
