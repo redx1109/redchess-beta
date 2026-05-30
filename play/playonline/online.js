@@ -188,6 +188,14 @@ let socket;
     const _originalApplyMove = window.applyMove;
     let _onlineReceiving = false;
 
+    window.applyMove = function (fromRow, fromCol, toRow, toCol) {
+    if (!_onlineReceiving && window.turn !== room.myColor) return;
+    _originalApplyMove(fromRow, fromCol, toRow, toCol);
+    if (!_onlineReceiving) {
+        window.sendOnlineMove({ from: [fromRow, fromCol], to: [toRow, toCol] }, null);
+    }
+};
+
     window.onOnlineMove((move) => {
       _onlineReceiving = true;
       window.applyMove(move.from[0], move.from[1], move.to[0], move.to[1]);
