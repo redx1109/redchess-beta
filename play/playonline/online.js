@@ -7,7 +7,11 @@ let socket;
 
   function initSocket() {
     socket = io(SERVER_URL, { autoConnect: false });
-
+    socket.on('game:error', ({ message }) => {
+    if (message === 'Room expired') {
+        localStorage.removeItem('onlineRoom');
+    }
+    });
     socket.on('connect', () => {
         const username = window.getUsername?.();
         if (username) socket.emit('player:online', { username });
@@ -114,7 +118,10 @@ let socket;
   };
 
   window.sendMatchRequest  = (to)       => socket?.emit('match:request', { to });
-  window.joinMatchmaking   = ()         => localStorage.removeItem('onlineRoom'); socket?.emit('queue:join');
+  window.joinMatchmaking = () => {
+    localStorage.removeItem('onlineRoom');
+    socket?.emit('queue:join');
+    };
   window.leaveMatchmaking  = ()         => socket?.emit('queue:leave');
   window.resignOnline  = ()         => {
     const room = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
