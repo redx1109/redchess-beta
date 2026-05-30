@@ -25,7 +25,10 @@ let socket;
     });
 
     socket.on('game:start', ({ roomId, white, black }) => {
-        const me = window.getUsername?.() || localStorage.getItem('chessUsername') || '';
+        const me = window.getUsername?.() 
+        || localStorage.getItem('chessUsername')
+        || localStorage.getItem('redchess_username') // ← add fallbacks
+        || '';
         console.log('game:start', { me, white, black });
         const myColor      = me === white ? 'w' : 'b';
         const opponentName = me === white ? black : white;
