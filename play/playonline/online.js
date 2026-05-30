@@ -185,6 +185,9 @@ let socket;
     let _onlineReceiving = false;
 
     window.applyMove = function (fromRow, fromCol, toRow, toCol) {
+      // Block if it's not your turn in online game
+      if (!_onlineReceiving && room.myColor && window.turn !== room.myColor) return;
+    
       _originalApplyMove(fromRow, fromCol, toRow, toCol);
       if (!_onlineReceiving) {
         window.sendOnlineMove({ from: [fromRow, fromCol], to: [toRow, toCol] }, null);
