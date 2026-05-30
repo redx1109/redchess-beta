@@ -189,6 +189,46 @@ let socket;
     if (nameEl)   nameEl.textContent   = room.opponentName || 'Opponent';
     if (avatarEl) avatarEl.textContent = '♟';
 
+    if (typeof window.updatePlayerBars === 'function') window.updatePlayerBars();
+const nameEl   = document.getElementById('opponentName');
+const avatarEl = document.getElementById('opponentAvatar');
+if (nameEl)   nameEl.textContent   = room.opponentName || 'Opponent';
+if (avatarEl) avatarEl.textContent = '♟';
+
+// ✅ ADD EVERYTHING BELOW HERE ↓
+const myName = window.getUsername?.() || localStorage.getItem('chessUsername') || 'You';
+
+window._getPlayerName = function(color) {
+    return color === room.myColor ? myName : (room.opponentName || 'Opponent');
+};
+
+const indicator = document.getElementById('turnIndicator');
+if (indicator && !window.gameOver) {
+    const whoseTurn = window.turn === room.myColor ? myName : (room.opponentName || 'Opponent');
+    indicator.textContent = `${whoseTurn}'s Turn`;
+    indicator.className   = 'turn-indicator ' + (window.turn === 'w' ? 'white-turn' : 'black-turn');
+}
+
+const bottomColor = window._flipped ? 'b' : 'w';
+const topColor    = window._flipped ? 'w' : 'b';
+const bottomBar   = document.getElementById('playerBarBottom');
+const topBar      = document.getElementById('playerBarTop');
+const dotClass    = (c) => `p-dot ${c === 'w' ? 'p-dot-white' : 'p-dot-black'}`;
+if (bottomBar) bottomBar.innerHTML = `<span class="${dotClass(bottomColor)}"></span>${bottomColor === room.myColor ? myName : room.opponentName}`;
+if (topBar)    topBar.innerHTML    = `<span class="${dotClass(topColor)}"></span>${topColor === room.myColor ? myName : room.opponentName}`;
+
+socket.on('game:over', ({ reason, loser }) => {
+    window.gameOver = true;
+    const ind = document.getElementById('turnIndicator');
+    if (ind) {
+        ind.textContent = reason === 'draw' ? 'Draw!' : `${loser} resigned!`;
+        ind.className   = 'turn-indicator game-over-indicator';
+    }
+    const resignBtn  = document.getElementById('resignBtn');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    if (resignBtn)  resignBtn.style.display  = 'none';
+    if (analyzeBtn) analyzeBtn.style.display = 'block';
+});
     // Flip board labels for black
     const flipped = room.myColor === 'b';
     const ranks = flipped ? ['1','2','3','4','5','6','7','8'] : ['8','7','6','5','4','3','2','1'];
