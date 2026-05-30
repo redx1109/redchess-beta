@@ -160,6 +160,10 @@ let socket;
   (function setOnlineRole() {
     const room = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
     if (!room.myColor) return;
+    // ── Don't override if a bot game is active ──
+    const botCfg = JSON.parse(localStorage.getItem('botSettings') || 'null');
+    if (botCfg && botCfg.active) return; 
+    
     window._botActive = true;
     window._playerCol = room.myColor;
     window._flipped   = room.myColor === 'b';  // game.js must read window._flipped
