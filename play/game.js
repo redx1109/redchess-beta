@@ -1,19 +1,3 @@
-// Server tells us the game started + which color we are
-socket.on('game:start', ({ roomId: rid, white, black }) => {
-    roomId  = rid;
-    const me = (typeof getUsername === 'function' && getUsername()) || '';
-    myColor = (me === white) ? 'w' : 'b';
-    _flipped = myColor === 'b';
-    window._flipped = _flipped;
-    renderBoard();
-});
-
-// Opponent's move arrives here
-socket.on('game:move', ({ move }) => {
-    const { fromRow, fromCol, toRow, toCol } = move;
-    applyMove(fromRow, fromCol, toRow, toCol, true); // true = fromRemote
-});
-
 // ─── Game state ────────────────────────────────────────────────────────────────
 
 let boardState = [
