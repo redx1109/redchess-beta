@@ -20,6 +20,7 @@ let socket;
 
     socket.on('game:start', ({ roomId, white, black }) => {
       const me = window.getUsername?.() || localStorage.getItem('chessUsername') || '';
+      console.log('game:start', { me, white, black }); 
       const myColor      = me === white ? 'w' : 'b';
       const opponentName = me === white ? black : white;
       localStorage.setItem('onlineRoom', JSON.stringify({
@@ -207,6 +208,7 @@ let socket;
 };
 
     window.onOnlineMove((move) => {
+      console.log('📨 received move', move); 
       _onlineReceiving = true;
       window.applyMove(move.from[0], move.from[1], move.to[0], move.to[1]);
       _onlineReceiving = false;
