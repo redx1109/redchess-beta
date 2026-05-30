@@ -109,15 +109,19 @@ let socket;
     socket?.emit('game:resign', { roomId: room.roomId });
   };
 
+    let _onlineMoveCallback = null;
+  socket.on('game:move', ({ move, fen }) => {
+    if (_onlineMoveCallback) _onlineMoveCallback(move, fen);
+  });
+
+  window.onOnlineMove = function (callback) {
+    _onlineMoveCallback = callback;
+  };
+
   window.sendOnlineMove = function (move, fen) {
     const room = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
     socket?.emit('game:move', { roomId: room.roomId, move, fen });
   };
-
-  window.onOnlineMove = function (callback) {
-    socket?.on('game:move', ({ move, fen }) => callback(move, fen));
-  };
-
   function showMatchRequest(from) {
     const el = document.createElement('div');
     el.style.cssText = `
@@ -183,16 +187,6 @@ let socket;
 
     const _originalApplyMove = window.applyMove;
     let _onlineReceiving = false;
-
-    window.applyMove = function (fromRow, fromCol, toRow, toCol) {
-      // Block if it's not your turn in online game
-      if (!_onlineReceiving && room.myColor && window.turn !== room.myColor) return;
-    
-      _originalApplyMove(fromRow, fromCol, toRow, toCol);
-      if (!_onlineReceiving) {
-        window.sendOnlineMove({ from: [fromRow, fromCol], to: [toRow, toCol] }, null);
-      }
-    };
 
     window.onOnlineMove((move) => {
       _onlineReceiving = true;
