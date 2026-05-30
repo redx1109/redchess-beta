@@ -16,7 +16,7 @@ let socket;
     socket.on('match:incoming', ({ from }) => { showMatchRequest(from); });
     socket.on('match:declined', ({ by })  => { alert(`${by} declined your match request.`); });
     socket.on('match:error',    ({ message }) => { alert(message); });
-    socket.on('queue:waiting',  () => { console.log('⏳ Waiting...'); });
+    socket.on('queue:waiting',  () => { localStorage.removeItem('onlineRoom'); console.log('⏳ Waiting...'); });
 
     // ✅ OUTSIDE game:start — runs on game.html too!
     socket.on('game:move', ({ move, fen }) => {
@@ -114,7 +114,7 @@ let socket;
   };
 
   window.sendMatchRequest  = (to)       => socket?.emit('match:request', { to });
-  window.joinMatchmaking   = ()         => socket?.emit('queue:join');
+  window.joinMatchmaking   = ()         => localStorage.removeItem('onlineRoom'); socket?.emit('queue:join');
   window.leaveMatchmaking  = ()         => socket?.emit('queue:leave');
   window.resignOnline  = ()         => {
     const room = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
