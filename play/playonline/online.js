@@ -32,6 +32,7 @@ let socket;
         console.log(':start', { me, white, black });
         const myColor      = me === white ? 'w' : 'b';
         const opponentName = me === white ? black : white;
+        localStorage.removeItem('onlineRoom');
         localStorage.setItem('onlineRoom', JSON.stringify({
             roomId, white, black, myColor, opponentName
         }));
