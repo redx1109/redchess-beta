@@ -162,10 +162,17 @@ function sendMove(fromRow, fromCol, toRow, toCol) {
 }
 // ─── Apply a move ──────────────────────────────────────────────────────────────
 
-function applyMove(fromRow, fromCol, toRow, toCol) {
+function applyMove(fromRow, fromCol, toRow, toCol, fromRemote = false) {
+     if (!fromRemote && roomId) {
+        socket.emit('game:move', {
+            roomId,
+            move: { fromRow, fromCol, toRow, toCol },
+            fen: null // you can add FEN later, server stores it
+        });
+    }
     clearCheck();
-    if (!fromRemote) sendMove(fromRow, fromCol, toRow, toCol);
     const piece  = boardState[fromRow][fromCol];
+    if (!fromRemote) sendMove(fromRow, fromCol, toRow, toCol);
     if (!piece) {
         console.error(`[applyMove] no piece at (${fromRow},${fromCol}) — move ignored`);
         return;
@@ -919,9 +926,11 @@ function renderBoard() {
                 img.decoding      = "async";   // don't block render for image decode
                 img.fetchPriority = "high";    // ✅ high priority for LCP paint
 
-                const canDrag = _botActive
-                    ? (piece[0] === _playerCol && turn === _playerCol)
-                    : (piece[0] === turn);
+                const canDrag = roomid    
+                    ? (piece[0] === myColor && turn === myColor)
+                    :_botActive
+                        ? (piece[0] === _playerCol && turn === _playerCol)
+                        : (piece[0] === turn);
 
                 if (canDrag && moveStyle !== "click") {
                     sq.addEventListener("pointerdown", (e) => {
@@ -969,6 +978,7 @@ function handleClick(row, col) {
     if (gameOver) return;
     if (viewIdx !== -1) { exitHistory(); return; }
 
+    if (roomId && myColor && turn !== myColor) return;
     // Block interaction on bot's turn
     if (_botActive && turn !== _playerCol) return;
 
