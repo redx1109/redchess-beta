@@ -1,52 +1,30 @@
-// ─── RedChess Multiplayer Server ────────────────────────────────────────────
-// Stack: Node.js + Express + Socket.io + MongoDB (Mongoose)
-// Features:
-//   • Unique username registration & lookup
-//   • Send / accept / decline match requests
-//   • Random matchmaking queue
-//   • Game rooms (move sync, resign, draw)
-// ────────────────────────────────────────────────────────────────────────────
-// PUT THIS before all other routes
 require('dotenv').config();
-const express   = require('express');
-const http      = require('http');
+const express    = require('express');
+const http       = require('http');
 const { Server } = require('socket.io');
-const mongoose  = require('mongoose');
-const cors      = require('cors');
+const mongoose   = require('mongoose');
+const cors       = require('cors');
 
 const app    = express();
 const server = http.createServer(app);
-app.use(cors({
-  origin: [
-    'https://beta.redchess.workers.dev'
-  ],
-  methods: ['GET', 'POST'],
-  credentials: true
-}));
 
-app.use(express.json());
-// ✅ CORS header for socket.io client file
-app.use('/socket.io', (req, res, next) => {
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  next();
-});
+const allowedOrigins = [
+  'https://beta.redchess.workers.dev',  // ✅ beta
+  'https://red.redchess.workers.dev',
+  'https://redchess.workers.dev',
+  'http://localhost:3000',
+  'http://localhost:5500'
+];
+
+app.use(cors({ origin: allowedOrigins, methods: ['GET','POST'], credentials: true }));
+app.use(express.json()); // ✅ only once
+
 const io = new Server(server, {
-  cors: {
-    origin: [
-      'https://red.redchess.workers.dev',
-      'https://redchess.workers.dev',
-      'http://localhost:3000',
-      'http://localhost:5500'
-    ],
-    methods: ['GET', 'POST'],
-    credentials: true
-  }
+  cors: { origin: allowedOrigins, methods: ['GET','POST'], credentials: true } // ✅ same list
 });
 
-app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
-app.use(express.json());
-
+// DELETE the duplicate app.use(cors(...)) that was here ✅
+// DELETE the duplicate app.use(express.json()) that was here ✅
 // ─── MongoDB connection ──────────────────────────────────────────────────────
 mongoose.connect(process.env.MONGO_URI, {
   family: 4,
