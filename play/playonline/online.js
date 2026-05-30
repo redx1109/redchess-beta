@@ -9,8 +9,8 @@ let socket;
     socket = io(SERVER_URL, { autoConnect: false });
 
     socket.on('connect', () => {
-      const username = window.getUsername?.();
-      if (username) socket.emit('player:online', { username });
+        const username = window.getUsername?.();
+        if (username) socket.emit('player:online', { username });
     });
 
     socket.on('match:incoming', ({ from }) => { showMatchRequest(from); });
@@ -18,21 +18,26 @@ let socket;
     socket.on('match:error',    ({ message }) => { alert(message); });
     socket.on('queue:waiting',  () => { console.log('⏳ Waiting...'); });
 
-    socket.on('game:start', ({ roomId, white, black }) => {
-      const me = window.getUsername?.() || localStorage.getItem('chessUsername') || '';
-      console.log('game:start', { me, white, black }); 
-      const myColor      = me === white ? 'w' : 'b';
-      const opponentName = me === white ? black : white;
-      localStorage.setItem('onlineRoom', JSON.stringify({
-        roomId, white, black, myColor, opponentName
-      }));
-      window.location.href = '/play/game.html';
-      socket.on('game:move', ({ move, fen }) => {
-      if (_onlineMoveCallback) _onlineMoveCallback(move, fen);
-      });
+    // ✅ OUTSIDE game:start — runs on game.html too!
+    socket.on('game:move', ({ move, fen }) => {
+        console.log('📨 received move', move);
+        if (_onlineMoveCallback) _onlineMoveCallback(move, fen);
     });
+
+    socket.on('game:start', ({ roomId, white, black }) => {
+        const me = window.getUsername?.() || localStorage.getItem('chessUsername') || '';
+        console.log('game:start', { me, white, black });
+        const myColor      = me === white ? 'w' : 'b';
+        const opponentName = me === white ? black : white;
+        localStorage.setItem('onlineRoom', JSON.stringify({
+            roomId, white, black, myColor, opponentName
+        }));
+        window.location.href = '/play/game.html';
+        // ✅ REMOVED game:move from here!
+    });
+
     socket.connect();
-  }
+}
 
   async function checkUsernameAvailable(name) {
     try {
