@@ -1006,33 +1006,6 @@ window.addEventListener('load', () => {
 // The swipe-nav gesture calls goToGameMove(). On mobile we track touch direction
 // and block goToGameMove from executing when the call originates from a swipe.
 // Click calls (from the move log) are unaffected because they don't set the flag.
-(function disableMobileSwipeNav() {
-    const isMobile = () => window.matchMedia('(max-width: 600px)').matches;
-
-    let _touchStartX = 0;
-    let _touchStartY = 0;
-    let _blockingSwipe = false;
-
-    document.addEventListener('touchstart', (e) => {
-        if (!isMobile()) return;
-        _touchStartX = e.touches[0].clientX;
-        _touchStartY = e.touches[0].clientY;
-        _blockingSwipe = false;
-    }, { passive: true });
-
-    document.addEventListener('touchmove', (e) => {
-        if (!isMobile()) return;
-        const dx = Math.abs(e.touches[0].clientX - _touchStartX);
-        const dy = Math.abs(e.touches[0].clientY - _touchStartY);
-        if (dx > dy && dx > 20) _blockingSwipe = true;
-    }, { passive: true });
-
-    // Wrap goToGameMove: if a horizontal swipe is in progress, swallow the call
-    const _origGoToGameMove = goToGameMove;
-    window.goToGameMove = function(idx) {
-        if (isMobile() && _blockingSwipe) { _blockingSwipe = false; return; }
-        _origGoToGameMove(idx);
-    };
 window.applyMove  = applyMove;
 window.renderBoard = renderBoard;
 })();
