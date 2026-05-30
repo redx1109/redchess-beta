@@ -24,19 +24,19 @@ let socket;
         if (_onlineMoveCallback) _onlineMoveCallback(move, fen);
     });
 
-    socket.on('game:start', ({ roomId, white, black }) => {
+    socket.on(':start', ({ roomId, white, black }) => {
         const me = window.getUsername?.() 
         || localStorage.getItem('chessUsername')
         || localStorage.getItem('redchess_username') // ← add fallbacks
         || '';
-        console.log('game:start', { me, white, black });
+        console.log(':start', { me, white, black });
         const myColor      = me === white ? 'w' : 'b';
         const opponentName = me === white ? black : white;
         localStorage.setItem('onlineRoom', JSON.stringify({
             roomId, white, black, myColor, opponentName
         }));
-        window.location.href = '/play/game.html';
-        // ✅ REMOVED game:move from here!
+        window.location.href = '/play/.html';
+        // ✅ REMOVED :move from here!
     });
 
     socket.connect();
@@ -115,7 +115,7 @@ let socket;
   window.sendMatchRequest  = (to)       => socket?.emit('match:request', { to });
   window.joinMatchmaking   = ()         => socket?.emit('queue:join');
   window.leaveMatchmaking  = ()         => socket?.emit('queue:leave');
-  window.resignOnlineGame  = ()         => {
+  window.resignOnline  = ()         => {
     const room = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
     socket?.emit('game:resign', { roomId: room.roomId });
   };
@@ -211,16 +211,16 @@ if (bottomBar) bottomBar.innerHTML = `<span class="${dotClass(bottomColor)}"></s
 if (topBar)    topBar.innerHTML    = `<span class="${dotClass(topColor)}"></span>${topColor === room.myColor ? myName : room.opponentName}`;
 
 socket.on('game:over', ({ reason, loser }) => {
-    window.gameOver = true;
-    const ind = document.getElementById('turnIndicator');
-    if (ind) {
-        ind.textContent = reason === 'draw' ? 'Draw!' : `${loser} resigned!`;
-        ind.className   = 'turn-indicator game-over-indicator';
+    if (reason === 'draw') {
+        window.endGame('Draw — Both players agreed!');
+    } else {
+        const winnerName = window._getPlayerName(
+            loser === window.getUsername?.()
+                ? (room.myColor === 'w' ? 'b' : 'w')
+                : room.myColor
+        );
+        window.endGame(`${loser} resigned — ${winnerName} wins!`);
     }
-    const resignBtn  = document.getElementById('resignBtn');
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    if (resignBtn)  resignBtn.style.display  = 'none';
-    if (analyzeBtn) analyzeBtn.style.display = 'block';
 });
     // Flip board labels for black
     const flipped = room.myColor === 'b';
