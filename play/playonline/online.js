@@ -2,7 +2,7 @@
 let socket;
 (function () {
   'use strict';
-
+  let _onlineMoveCallback = null;
   const SERVER_URL = 'https://redchess-beta.up.railway.app';
 
   function initSocket() {
@@ -26,8 +26,10 @@ let socket;
         roomId, white, black, myColor, opponentName
       }));
       window.location.href = '/play/game.html';
+      socket.on('game:move', ({ move, fen }) => {
+      if (_onlineMoveCallback) _onlineMoveCallback(move, fen);
+      });
     });
-
     socket.connect();
   }
 
@@ -108,11 +110,6 @@ let socket;
     const room = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
     socket?.emit('game:resign', { roomId: room.roomId });
   };
-
-    let _onlineMoveCallback = null;
-  socket.on('game:move', ({ move, fen }) => {
-    if (_onlineMoveCallback) _onlineMoveCallback(move, fen);
-  });
 
   window.onOnlineMove = function (callback) {
     _onlineMoveCallback = callback;
