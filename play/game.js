@@ -1,5 +1,4 @@
 // ─── Multiplayer Socket ────────────────────────────────────────────────────
-const socket = io("wss://your-railway-url.railway.app");
 let roomId   = null;
 let myColor  = null; // 'w' or 'b' — assigned by server on game:start
 
