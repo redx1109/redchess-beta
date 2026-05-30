@@ -6,6 +6,11 @@ let socket;
   const SERVER_URL = 'https://redchess-beta.up.railway.app';
 
   function initSocket() {
+    if (typeof io === 'undefined') {
+        console.warn('[online] socket.io not loaded — retrying in 1s');
+        setTimeout(initSocket, 1000);
+        return;
+    }
     socket = io(SERVER_URL, { autoConnect: false });
     socket.on('game:error', ({ message }) => {
     if (message === 'Room expired') {
