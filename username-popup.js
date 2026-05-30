@@ -247,9 +247,9 @@
     // ✅ Check if this is a Socket.io online game
     const onlineRoom = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
     const opponentName = onlineRoom.opponentName || 'Opponent';
-
-    bottomName = bottomColor === 'w' ? username : opponentName;
-    topName    = topColor    === 'w' ? username : opponentName;
+    const myColor = onlineRoom.myColor || 'w';
+    bottomName = bottomColor === myColor ? username : opponentName;
+    topName    = topColor    === myColor ? username : opponentName;
 }
 
         bottomBar.innerHTML = `<span class="${dotClass(bottomColor)}"></span>${bottomName}`;
