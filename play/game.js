@@ -874,12 +874,9 @@ function renderBoard() {
                 img.decoding      = "async";   // don't block render for image decode
                 img.fetchPriority = "high";    // ✅ high priority for LCP paint
 
-                const canDrag = roomid    
-                    ? (piece[0] === myColor && turn === myColor)
-                    :_botActive
-                        ? (piece[0] === _playerCol && turn === _playerCol)
-                        : (piece[0] === turn);
-
+                const canDrag = _botActive
+                    ? (piece[0] === _playerCol && turn === _playerCol)
+                    : (piece[0] === turn);
                 if (canDrag && moveStyle !== "click") {
                     sq.addEventListener("pointerdown", (e) => {
                         if (e.button !== 0) return;
@@ -925,8 +922,6 @@ function handleClick(row, col) {
     if (didDrag) { didDrag = false; return; }
     if (gameOver) return;
     if (viewIdx !== -1) { exitHistory(); return; }
-
-    if (roomId && myColor && turn !== myColor) return;
     // Block interaction on bot's turn
     if (_botActive && turn !== _playerCol) return;
 
