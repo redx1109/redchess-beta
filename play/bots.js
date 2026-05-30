@@ -706,7 +706,8 @@ function getBotById(id) {
 function activateBot(botId, playerColor = 'w') {
   const bot = getBotById(botId);
   if (!bot) { console.error(`[bots.js] Unknown bot id: "${botId}"`); return; }
-
+  // ── Clear stale online room so online.js doesn't stomp bot config ──
+  localStorage.removeItem('onlineRoom');  
   const settings = {
     active:         true,
     playerColor:    playerColor,
