@@ -551,7 +551,7 @@ function handleClick(row, col) {
 // ─── Start ─────────────────────────────────────────────────────────────────────
 
 window.addEventListener('load', () => {
-    loadGameState();
+    if (typeof loadGameState === 'function') loadGameState();
     renderBoard();
     const _hasUsername = typeof getUsername === 'function' && getUsername();
     if (!_hasUsername && typeof showUsernamePopup === 'function') {
