@@ -116,10 +116,29 @@ boardEl.addEventListener("click", (e) => {
     handleClick(parseInt(sq.dataset.row), parseInt(sq.dataset.col));
 });
 
+ // ── WebSocket setup ──────────────────────────────────
+const socket = new WebSocket("wss://your-railway-url");
+
+socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === "move") {
+        applyMove(data.fromRow, data.fromCol, data.toRow, data.toCol);
+    }
+};
+
+// Call this inside applyMove() right at the top, BEFORE applying locally
+function sendMove(fromRow, fromCol, toRow, toCol) {
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+            type: "move", fromRow, fromCol, toRow, toCol
+        }));
+    }
+}
 // ─── Apply a move ──────────────────────────────────────────────────────────────
 
 function applyMove(fromRow, fromCol, toRow, toCol) {
-     clearCheck();
+    clearCheck();
+    if (!fromRemote) sendMove(fromRow, fromCol, toRow, toCol);
     const piece  = boardState[fromRow][fromCol];
     if (!piece) {
         console.error(`[applyMove] no piece at (${fromRow},${fromCol}) — move ignored`);
@@ -1036,4 +1055,5 @@ window.addEventListener('load', () => {
         if (isMobile() && _blockingSwipe) { _blockingSwipe = false; return; }
         _origGoToGameMove(idx);
     };
+
 })();
