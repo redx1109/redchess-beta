@@ -553,7 +553,7 @@ function handleClick(row, col) {
 
 // ─── Start ─────────────────────────────────────────────────────────────────────
 
-loadGameState();
+window.loadGameState();
 renderBoard();
 
 window.addEventListener('load', () => {
