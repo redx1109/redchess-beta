@@ -18,10 +18,7 @@ const app    = express();
 const server = http.createServer(app);
 app.use(cors({
   origin: [
-    'https://red.redchess.workers.dev',
-    'https://redchess.workers.dev',
-    'http://localhost:3000',
-    'http://localhost:5500'
+    'https://beta.redchess.workers.dev'
   ],
   methods: ['GET', 'POST'],
   credentials: true
