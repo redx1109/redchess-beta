@@ -24,7 +24,7 @@ let socket;
         if (_onlineMoveCallback) _onlineMoveCallback(move, fen);
     });
 
-    socket.on(':start', ({ roomId, white, black }) => {
+    socket.on('game:start', ({ roomId, white, black }) => {
         const me = window.getUsername?.() 
         || localStorage.getItem('chessUsername')
         || localStorage.getItem('redchess_username') // ← add fallbacks
