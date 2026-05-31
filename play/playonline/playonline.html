@@ -484,7 +484,40 @@
                 </div>
             </div>
         </div>
-
+        <!-- ── Search Player ─────────────────────────────────────────────── -->
+        <div style="width:100%;max-width:420px;margin-bottom:1rem;">
+        <div style="display:flex;gap:8px;justify-content:center;">
+        <input 
+            id="playerSearchInput"
+            type="text" 
+            placeholder="Search player username…"
+            autocomplete="off"
+            style="
+                flex:1;
+                background:rgba(20,17,13,0.7);
+                border:1px solid #3a3426;
+                border-radius:4px;
+                color:#e8dfc8;
+                font-family:'Cinzel',serif;
+                font-size:13px;
+                padding:10px 14px;
+                outline:none;
+                transition:border-color 0.18s;
+            "
+            oninput="handlePlayerSearch(this.value)"
+            onfocus="this.style.borderColor='#c9a84c'"
+            onblur="this.style.borderColor='#3a3426'"
+            >
+        </div>
+        <div id="playerSearchResults" style="
+            margin-top:8px;
+            display:flex;
+            flex-direction:column;
+            gap:6px;
+            max-height:200px;
+            overflow-y:auto;
+            "></div>
+        </div>
         <!-- ── Hosting view: show code + wait ─────────────────────────────── -->
         <div class="lobby-view" id="viewCreate" style="display:none; flex-direction:column; align-items:center; width:100%; max-width:480px; padding:0 1.5rem; box-sizing:border-box;">
 
@@ -852,5 +885,48 @@
             showLobbyView('viewFindMatch');
         });
     </script>
+    <script>
+let _searchTimeout = null;
+
+async function handlePlayerSearch(query) {
+    const results = document.getElementById('playerSearchResults');
+    clearTimeout(_searchTimeout);
+    if (!query || query.length < 2) { results.innerHTML = ''; return; }
+    _searchTimeout = setTimeout(async () => {
+        const players = await window.searchPlayer(query);
+        results.innerHTML = '';
+        if (!players.length) {
+            results.innerHTML = `<div style="color:#6b6352;font-family:'Cinzel',serif;font-size:12px;text-align:center;padding:8px;">No players found</div>`;
+            return;
+        }
+        players.forEach(p => {
+            const div = document.createElement('div');
+            div.style.cssText = `
+                display:flex;justify-content:space-between;align-items:center;
+                background:rgba(20,17,13,0.7);border:1px solid #3a3426;
+                border-radius:4px;padding:10px 14px;cursor:pointer;
+                transition:border-color 0.18s;
+            `;
+            div.innerHTML = `
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:${p.online ? '#4caf7a' : '#3a3426'};display:inline-block;"></span>
+                    <span style="font-family:'Cinzel',serif;font-size:13px;color:#e8dfc8;">${p.username}</span>
+                    <span style="font-size:10px;color:#6b6352;">${p.online ? 'Online' : 'Offline'}</span>
+                </div>
+                <button onclick="window.sendMatchRequest('${p.username}')" style="
+                    background:transparent;border:1px solid #c9a84c;border-radius:2px;
+                    color:#c9a84c;font-family:'Cinzel',serif;font-size:10px;
+                    letter-spacing:0.08em;padding:5px 12px;cursor:pointer;
+                    transition:background 0.18s;
+                " onmouseover="this.style.background='rgba(201,168,76,0.12)'"
+                   onmouseout="this.style.background='transparent'">
+                    CHALLENGE
+                </button>
+            `;
+            results.appendChild(div);
+        });
+    }, 300);
+}
+</script>
 </body>
 </html>
