@@ -2,17 +2,6 @@
    RED CHESS — EVENTS  (all event listeners + coord labels)
    ══════════════════════════════════════════════════════════════ */
 
-// ─── Board coord labels ───────────────────────────────────────────────────────
-
-["8","7","6","5","4","3","2","1"].forEach(r => {
-    const s = document.createElement("span"); s.textContent = r;
-    document.getElementById("rankLabels").appendChild(s);
-});
-["a","b","c","d","e","f","g","h"].forEach(f => {
-    const s = document.createElement("span"); s.textContent = f;
-    document.getElementById("fileLabels").appendChild(s);
-});
-
 // ─── Tab switching ────────────────────────────────────────────────────────────
 
 document.querySelectorAll(".tab").forEach(btn => {
