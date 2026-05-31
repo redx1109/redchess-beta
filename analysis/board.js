@@ -4,6 +4,27 @@
 let boardFlipped = false;
 const boardEl = document.getElementById("board");
 
+function buildCoordLabels() {
+    const rankLabels = document.getElementById("rankLabels");
+    const fileLabels = document.getElementById("fileLabels");
+    if (rankLabels) {
+        rankLabels.innerHTML = "";
+        for (let i = 0; i < 8; i++) {
+            const span = document.createElement("span");
+            span.textContent = boardFlipped ? (i + 1) : (8 - i);
+            rankLabels.appendChild(span);
+        }
+    }
+    if (fileLabels) {
+        fileLabels.innerHTML = "";
+        const files = boardFlipped ? "hgfedcba" : "abcdefgh";
+        for (const f of files) {
+            const span = document.createElement("span");
+            span.textContent = f;
+            fileLabels.appendChild(span);
+        }
+    }
+}
 // ─── Board rendering ──────────────────────────────────────────────────────────
 
 function renderPosition(fen, highlightSqs = [], bestSqs = []) {
@@ -46,6 +67,7 @@ function renderPosition(fen, highlightSqs = [], bestSqs = []) {
             }
 
             boardEl.appendChild(sqEl);
+            buildCoordLabels();
         }
     }
 }
