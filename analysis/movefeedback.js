@@ -381,7 +381,21 @@ function showMoveDetail(idx, positions, analysisData, isWhiteTurn) {
     const displayCp = data.cpWhite !== undefined ? data.cpWhite : data.cp;
     evEl.textContent = "Eval: " + formatEval(displayCp, data.mate);
     const prevData = analysisData[idx - 1] || {};
-    best.textContent = prevData.bestMove ? "Best: " + prevData.bestMove : "";
+    if (prevData.bestMove && prevData.bestMove.length >= 4) {
+        try {
+            const chess = new Chess(positions[idx - 1].fen);
+            const move = chess.move({
+                from: prevData.bestMove.slice(0, 2),
+                to:   prevData.bestMove.slice(2, 4),
+                promotion: prevData.bestMove[4] || 'q'
+            });
+            best.textContent = move ? "Best: " + move.san : "Best: " + prevData.bestMove;
+        } catch {
+            best.textContent = "Best: " + prevData.bestMove;
+        }
+    } else {
+        best.textContent = "";
+    }
 
     // Show opening name for book moves (requires fenAfter stored in analysisData)
     if (opening) {
