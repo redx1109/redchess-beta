@@ -67,6 +67,17 @@ let socket;
       if (_onlineMoveCallback) _onlineMoveCallback(move, fen);
     });
 
+    socket.on('game:state', ({ moves }) => {
+      if (!moves || !moves.length) return;
+      console.log(`🔄 Replaying ${moves.length} moves after rejoin`);
+      _onlineReceiving = true;
+      for (const move of moves) {
+          if (move && move.from && move.to) {
+              window.applyMove(move.from[0], move.from[1], move.to[0], move.to[1]);
+          }
+      }
+      _onlineReceiving = false;
+    });
     socket.on('game:start', ({ roomId, white, black }) => {
       const me = window.getUsername?.()
         || localStorage.getItem('chessUsername')
@@ -324,7 +335,7 @@ let socket;
     if (rl) { rl.innerHTML = ''; ranks.forEach(r => { const s = document.createElement('span'); s.textContent = r; rl.appendChild(s); }); }
     if (fl) { fl.innerHTML = ''; files.forEach(f => { const s = document.createElement('span'); s.textContent = f; fl.appendChild(s); }); }
 
-    if (typeof Move !== 'function') {
+    if (typeof window.applyMove !== 'function') {
       console.error('[online] applyMove not found — script load order issue');
       return;
     }
