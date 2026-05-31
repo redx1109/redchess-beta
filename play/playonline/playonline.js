@@ -957,3 +957,42 @@ if (_urlCode && !checkReconnect()) {
 }
 
 })();
+async function updateOnlineCount() {
+    const players = await window.searchPlayer('');
+    const online = players.filter(p => p.online).length;
+    const el = document.getElementById('rcOnlineCount');
+    if (el) el.textContent = online + ' ONLINE';
+}
+
+let _searchTimeout = null;
+async function handlePlayerSearch(query) {
+    const results = document.getElementById('rcResults');
+    clearTimeout(_searchTimeout);
+    if (!query || query.length < 2) {
+        results.innerHTML = '<div style="font-size:12px;color:#4a4232;text-align:center;padding:16px 0;font-family:Cinzel,serif;letter-spacing:0.1em;">TYPE TO SEARCH PLAYERS</div>';
+        return;
+    }
+    _searchTimeout = setTimeout(async () => {
+        const players = await window.searchPlayer(query);
+        if (!players.length) {
+            results.innerHTML = '<div style="font-size:12px;color:#4a4232;text-align:center;padding:16px 0;font-family:Cinzel,serif;letter-spacing:0.1em;">NO PLAYERS FOUND</div>';
+            return;
+        }
+        results.innerHTML = players.map(p => `
+            <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(20,17,13,0.7);border:1px solid #2e2a22;border-radius:4px;padding:10px 14px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:8px;height:8px;border-radius:50%;background:${p.online ? '#4caf7a' : '#2e2a22'};${p.online ? 'box-shadow:0 0 4px rgba(76,175,122,0.5)' : ''}"></div>
+                    <span style="font-family:'Cinzel',serif;font-size:13px;color:#e8dfc8;letter-spacing:0.06em;">${p.username}</span>
+                    <span style="font-family:'Cinzel',serif;font-size:10px;color:#6b6352;">${p.online ? '· ONLINE' : '· OFFLINE'}</span>
+                </div>
+                <button onclick="window.sendMatchRequest('${p.username}')" ${!p.online ? 'disabled' : ''}
+                style="background:transparent;border:1px solid ${p.online ? '#c9a84c' : '#3a3426'};border-radius:2px;color:${p.online ? '#c9a84c' : '#4a4232'};font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;padding:5px 13px;cursor:${p.online ? 'pointer' : 'default'};">
+                    ${p.online ? 'CHALLENGE' : 'OFFLINE'}
+                </button>
+            </div>
+        `).join('');
+    }, 280);
+}
+
+// update online count when tab opens
+document.getElementById('tabPlayFriend').addEventListener('click', updateOnlineCount);
