@@ -130,17 +130,17 @@ function detectSacrifice(move) {
     return false;
 }
 
-// ─── Nearly-best move check ───────────────────────────────────────────────────
-// Chess.com says Brilliant requires the move to be "best or nearly best".
-// "Nearly best" = the played move loses at most NEARLY_BEST_THRESHOLD win-prob
-// compared to the engine's best move. If cpBestAfter is unavailable, only
-// strict playedBest qualifies (we can't determine "nearly best" without it).
-const NEARLY_BEST_THRESHOLD = 0.02; // within 0.02 EP of the best move
+// ─── Nearly- move check ───────────────────────────────────────────────────
+// Chess.com says Brilliant requires the move to be " or nearly ".
+// "Nearly " = the played move loses at most NEARLY__THRESHOLD win-prob
+// compared to the engine's  move. If cpAfter is unavailable, only
+// strict played qualifies (we can't determine "nearly " without it).
+const NEARLY__THRESHOLD = 0.02; // within 0.02 EP of the  move
 
-function isNearlyBest(playedBest, wpAfterPlayed, wpAfterBest) {
-    if (playedBest) return true;
-    if (wpAfterBest === null || wpAfterBest === undefined) return false;
-    return (wpAfterBest - wpAfterPlayed) <= NEARLY_BEST_THRESHOLD;
+function isNearly(played, wpAfterPlayed, wpAfter) {
+    if (played) return true;
+    if (wpAfter === null || wpAfter === undefined) return false;
+    return (wpAfter - wpAfterPlayed) <= NEARLY__THRESHOLD;
 }
 
 // ─── Core classifier ───────────────────────────────────────────────────────────
@@ -150,7 +150,7 @@ function isNearlyBest(playedBest, wpAfterPlayed, wpAfterBest) {
 //  isWhite       – true if the player who just moved was White
 //  moveIdx       – half-move index (kept for compatibility, not used)
 //  playedMove    – UCI string of the move played,  e.g. "e2e4"
-//  bestMove      – engine best move UCI,           e.g. "d2d4"
+//  Move      – engine best move UCI,           e.g. "d2d4"
 //  move          – chess.js verbose move object { piece, captured, …, isQuietSacrifice? }
 //  fenAfter      – full FEN after the move (used for opening book lookup)
 //  cpBestAfter   – (optional) eval after engine best move (White's POV)
@@ -380,7 +380,8 @@ function showMoveDetail(idx, positions, analysisData, isWhiteTurn) {
     // but the text eval display always uses the engine's raw White-POV number.
     const displayCp = data.cpWhite !== undefined ? data.cpWhite : data.cp;
     evEl.textContent = "Eval: " + formatEval(displayCp, data.mate);
-    best.textContent   = data.bestMove ? "Best: " + data.bestMove : "";
+    const prevData = analysisData[idx - 1] || {};
+    best.textContent = prevData.bestMove ? "Best: " + prevData.bestMove : "";
 
     // Show opening name for book moves (requires fenAfter stored in analysisData)
     if (opening) {
