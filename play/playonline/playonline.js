@@ -39,7 +39,7 @@ const ICE_SERVERS = [
         credential: "sE/7NuJ35/XzsQ5v",
       },
   ];
-});
+
 const PEER_CONFIG = {
     host: '0.peerjs.com', port: 443, path: '/', secure: true, debug: 0,
     config: { iceServers: ICE_SERVERS },
@@ -955,3 +955,4 @@ if (_urlCode && !checkReconnect()) {
 } else {
     checkReconnect();
 }
+})();
