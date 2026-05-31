@@ -71,17 +71,6 @@
             padding: 0 4px;
             box-sizing: border-box;
         }
-        .code-boxes { display: flex; gap: 8px; justify-content: center; margin: 0.5rem 0; }
-        .code-box-input {
-            width: 44px; height: 54px; text-align: center;
-            font-family: 'Cinzel', serif; font-size: 22px; font-weight: 600;
-            letter-spacing: 0; color: #e8dfc8;
-            background: rgba(20,17,13,0.7); border: 1px solid #3a3426;
-            border-radius: 4px; outline: none; caret-color: #c9a84c;
-            transition: border-color 0.18s, box-shadow 0.18s;
-            text-transform: uppercase;
-        }
-        .code-box-input:focus { border-color: #c9a84c; box-shadow: 0 0 0 2px rgba(201,168,76,0.18); }
         .conn-dot {
             display: inline-block; width: 8px; height: 8px; border-radius: 50%;
             margin-left: 6px; vertical-align: middle; transition: background 0.4s;
@@ -123,16 +112,6 @@
         }
         .draw-btn:hover:not(:disabled) { border-color: #c9a84c; color: #c9a84c; }
         .draw-btn:disabled { opacity: 0.5; cursor: default; }
-        .lobby-code-box { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 1.5rem; }
-        .lobby-code-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-        .lobby-btn-sm {
-            font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.1em;
-            padding: 8px 18px; background: transparent; border: 1px solid #c9a84c;
-            border-radius: 2px; color: #c9a84c; cursor: pointer; transition: background 0.2s;
-        }
-        .lobby-btn-sm:hover { background: rgba(201,168,76,0.12); }
-        .lobby-btn-sm--ghost { border-color: #3a3426; color: #7a7060; }
-        .lobby-btn-sm--ghost:hover { border-color: #c9a84c; color: #c9a84c; }
 
         /* ── Online bar + dropdown ── */
         .rc-online-bar {
@@ -221,8 +200,6 @@
             .move-log { max-height: 160px !important; overflow-y: auto !important; font-size: 13px !important; }
             .analyze-btn { width: 100% !important; padding: 14px 0 !important; font-size: 11px !important; }
             .player-tag-row { width: 96vw !important; }
-            .code-box-input { width: 38px; height: 46px; font-size: 18px; }
-            .code-boxes { gap: 6px; }
             #drawBanner { top: 48px; padding: 8px 12px; gap: 8px; }
         }
     </style>
@@ -301,64 +278,6 @@
             <button class="lobby-btn lobby-btn-ghost" id="btnCancelMatch" style="margin-top:2.5rem; max-width:200px;">✕ CANCEL</button>
         </div>
 
-        <!-- ── Play Friend view ── -->
-        <div class="lobby-view" id="viewPlayFriend" style="display:none; flex-direction:column; align-items:center;">
-            <div class="lobby-title">Play Online</div>
-            <div class="lobby-subtitle">Challenge a friend across the board</div>
-
-            <!-- Create / Join cards -->
-            <div class="lobby-cards">
-                <div class="lobby-card">
-                    <div class="lobby-card-icon">♔</div>
-                    <div class="lobby-card-title">Create Game</div>
-                    <p class="lobby-card-desc">Generate a code and share it with your friend. You'll play as White.</p>
-                    <button class="lobby-btn" id="btnCreate" onclick="window.location.href='playfriend.html?mode=create'">CREATE GAME</button>
-                </div>
-                <div class="lobby-divider"></div>
-                <div class="lobby-card">
-                    <div class="lobby-card-icon">♟</div>
-                    <div class="lobby-card-title">Join Game</div>
-                    <p class="lobby-card-desc">Enter the code your friend shared to join their game. You'll play as Black.</p>
-                    <button class="lobby-btn lobby-btn-ghost" id="btnShowJoin">JOIN GAME</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ── Hosting view ── -->
-        <div class="lobby-view" id="viewCreate" style="display:none; flex-direction:column; align-items:center; width:100%; max-width:480px; padding:0 1.5rem; box-sizing:border-box;">
-            <div class="lobby-title">Your Game Code</div>
-            <div class="lobby-subtitle">Share the code or link with your opponent</div>
-            <div class="lobby-code-box">
-                <div class="lobby-code" id="gameCode">------</div>
-                <div class="lobby-code-actions">
-                    <button class="lobby-btn-sm" id="btnCopyCode">COPY CODE</button>
-                    <button class="lobby-btn-sm lobby-btn-sm--ghost" id="btnShareLink">SHARE LINK</button>
-                </div>
-            </div>
-            <div class="lobby-waiting" style="margin-top:2.5rem;">
-                <div class="lobby-spinner"></div>
-                <div class="lobby-status" id="statusCreate">Waiting for opponent…</div>
-            </div>
-            <button class="lobby-btn lobby-btn-ghost" id="btnCreateBack" style="margin-top:2.5rem; max-width:200px;">← BACK</button>
-        </div>
-
-        <!-- ── Join view ── -->
-        <div class="lobby-view" id="viewJoin" style="display:none; flex-direction:column; align-items:center; width:100%; max-width:380px; padding:0 1.5rem; box-sizing:border-box; gap:1rem;">
-            <div class="lobby-title">Join Game</div>
-            <div class="lobby-subtitle">Enter the code your opponent shared</div>
-            <div class="code-boxes" id="codeBoxes">
-                <input class="code-box-input" type="text" maxlength="1" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="text" aria-label="Code digit 1">
-                <input class="code-box-input" type="text" maxlength="1" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="text" aria-label="Code digit 2">
-                <input class="code-box-input" type="text" maxlength="1" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="text" aria-label="Code digit 3">
-                <input class="code-box-input" type="text" maxlength="1" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="text" aria-label="Code digit 4">
-                <input class="code-box-input" type="text" maxlength="1" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="text" aria-label="Code digit 5">
-                <input class="code-box-input" type="text" maxlength="1" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="text" aria-label="Code digit 6">
-            </div>
-            <div class="lobby-status" id="statusJoin">Enter the 6-character code your opponent shared.</div>
-            <button class="lobby-btn" id="btnJoinConfirm" style="margin-top:0.6rem;">CONNECT</button>
-            <button class="lobby-btn lobby-btn-ghost" id="btnJoinBack">← BACK</button>
-        </div>
-
     </div>
 
     <!-- ══════════════════════════════════════════════════════════════
@@ -430,23 +349,17 @@
 
     <!-- ══════════════════════════════════════════════════════════════
          SCRIPTS
-         FIX: game.js, online.js and other game scripts are now loaded
-         BEFORE the inline script block that references their exports.
-         Previously they were after it, causing ReferenceErrors on load.
     ══════════════════════════════════════════════════════════════ -->
     <script>
-        // Clear stale local storage on every page load
         try { localStorage.removeItem('botSettings'); } catch(e) {}
         try { localStorage.removeItem('chessGameState'); } catch(e) {}
     </script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
     <script src="../moveanimation.js"></script>
     <script src="../movelogic.js"></script>
-    <script src="../persistence.js"></script> 
+    <script src="../persistence.js"></script>
     <script src="../game.js"></script>
-    <script src="playonline.js"></script>
     <script src="online.js"></script>
     <script src="../../bganimation.js"></script>
     <script src="../../music-persist.js"></script>
@@ -459,10 +372,6 @@
 
     <script>
         // ── Board labels ───────────────────────────────────────────────────────
-        // _flipped is declared and owned by game.js (loaded above).
-        // online.js sets window._flipped before game.js reads it for Black players.
-        // Do NOT redeclare it here — that causes a SyntaxError duplicate declaration.
-
         const ranks = _flipped ? ['1','2','3','4','5','6','7','8'] : ['8','7','6','5','4','3','2','1'];
         const files = _flipped ? ['h','g','f','e','d','c','b','a'] : ['a','b','c','d','e','f','g','h'];
         const rl = document.getElementById('rankLabels');
@@ -507,8 +416,6 @@
         const arrowLayer = document.getElementById('arrowLayer');
         let rightDragFrom = null, highlightedSquares = new Set(), arrows = [];
 
-        // FIX: helper sanitizes a string for safe HTML injection, preventing XSS
-        // from malicious usernames coming from the server.
         function sanitizeText(str) {
             const d = document.createElement('div');
             d.textContent = str;
@@ -596,7 +503,7 @@
 
         // ── Tab switching ──────────────────────────────────────────────────────
         function showLobbyView(id) {
-            ['viewFindMatch','viewSearching','viewPlayFriend','viewCreate','viewJoin']
+            ['viewFindMatch', 'viewSearching']
                 .forEach(v => { const el = document.getElementById(v); if (el) el.style.display = 'none'; });
             const el = document.getElementById(id);
             if (el) el.style.display = 'flex';
@@ -605,13 +512,15 @@
         function switchTab(tab) {
             document.getElementById('tabFindMatch').classList.toggle('active', tab === 'findmatch');
             document.getElementById('tabPlayFriend').classList.toggle('active', tab === 'playfriend');
-            showLobbyView(tab === 'findmatch' ? 'viewFindMatch' : 'viewPlayFriend');
+            if (tab === 'playfriend') {
+                window.location.href = 'playfriend.html';
+                return;
+            }
+            showLobbyView('viewFindMatch');
         }
 
-        // ── Find Match ────────────────────────────────────────────────────────
+        // ── Find Match ─────────────────────────────────────────────────────────
         document.getElementById('btnStartMatch').addEventListener('click', function () {
-            // FIX: was a blunt alert(); now logs a proper console error so you
-            // can actually debug it in DevTools instead of guessing.
             if (typeof window.Matchmaking !== 'function') {
                 console.error('[RedChess] window.Matchmaking is not defined — check that online.js loaded correctly.');
                 return;
@@ -629,7 +538,6 @@
         let _onlineListOpen = false;
 
         function playerRowHTML(p) {
-            // FIX: username is sanitized before injection to prevent XSS
             const safeName = sanitizeText(p.username);
             return `
                 <div class="rc-player-row">
@@ -647,22 +555,15 @@
             const chevron  = document.getElementById('rcChevron');
             const bar      = document.getElementById('rcOnlineBar');
             _onlineListOpen = !_onlineListOpen;
-
             if (_onlineListOpen) {
-                dropdown.classList.add('open');
-                bar.classList.add('open');
-                chevron.classList.add('open');
+                dropdown.classList.add('open'); bar.classList.add('open'); chevron.classList.add('open');
                 dropdown.innerHTML = '<div class="rc-empty-msg">LOADING…</div>';
                 const players = await window.getOnlinePlayers().catch(() => []);
-                if (!players.length) {
-                    dropdown.innerHTML = '<div class="rc-empty-msg">NO PLAYERS ONLINE RIGHT NOW</div>';
-                } else {
-                    dropdown.innerHTML = players.map(playerRowHTML).join('');
-                }
+                dropdown.innerHTML = !players.length
+                    ? '<div class="rc-empty-msg">NO PLAYERS ONLINE RIGHT NOW</div>'
+                    : players.map(playerRowHTML).join('');
             } else {
-                dropdown.classList.remove('open');
-                bar.classList.remove('open');
-                chevron.classList.remove('open');
+                dropdown.classList.remove('open'); bar.classList.remove('open'); chevron.classList.remove('open');
             }
         }
 
@@ -676,7 +577,6 @@
         let _searchTimeout = null;
 
         function searchPlayerRowHTML(p) {
-            // FIX: username is sanitized before injection to prevent XSS
             const safeName = sanitizeText(p.username);
             return `
                 <div class="rc-player-row">
@@ -696,26 +596,16 @@
         async function handlePlayerSearch(query) {
             const results = document.getElementById('rcSearchResults');
             clearTimeout(_searchTimeout);
-            if (!query || query.length < 2) {
-                results.innerHTML = '';
-                return;
-            }
+            if (!query || query.length < 2) { results.innerHTML = ''; return; }
             _searchTimeout = setTimeout(async () => {
                 const players = await window.searchPlayer(query).catch(() => []);
-                if (!players.length) {
-                    results.innerHTML = `<div style="font-family:'Cinzel',serif;font-size:11px;color:#4a4232;text-align:center;padding:12px;letter-spacing:0.1em;">NO PLAYERS FOUND</div>`;
-                    return;
-                }
-                results.innerHTML = players.map(searchPlayerRowHTML).join('');
+                results.innerHTML = !players.length
+                    ? `<div style="font-family:'Cinzel',serif;font-size:11px;color:#4a4232;text-align:center;padding:12px;letter-spacing:0.1em;">NO PLAYERS FOUND</div>`
+                    : players.map(searchPlayerRowHTML).join('');
             }, 280);
         }
 
-        // ── Online count: wait for socket connect event instead of a blind
-        // setTimeout, so we don't race against the connection handshake.
-        // FIX: was setTimeout(updateOnlineCount, 800) which often fired before
-        // the socket was ready, resulting in an empty count on first load.
         window.addEventListener('load', () => {
-            // Attempt immediately, then let online.js call it again on connect
             updateOnlineCount().catch(() => {});
         });
     </script>
