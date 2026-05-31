@@ -447,12 +447,6 @@
             if (e.target.closest('#board') || e.target.closest('#arrowLayer')) e.preventDefault();
             highlightedSquares.clear(); arrows = []; applyHighlights(); drawArrows();
         });
-        window.addEventListener('load', () => {
-    const mode = new URLSearchParams(window.location.search).get('mode');
-    if (mode === 'create') document.getElementById('btnCreate').click();
-    else if (mode === 'join') document.getElementById('btnShowJoin').click();
-});
-
     </script>
 
 </body>
