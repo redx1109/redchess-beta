@@ -5,7 +5,7 @@
 // Requires openings.js to be loaded first (defines OPENING_BOOK):
 //   <script src="openings.js"></script>
 //   <script src="movefeedback.js"></script>
-function isNearly(played, wpAfterPlayed, wpAfter) {
+function isNearlyBest(played, wpAfterPlayed, wpAfter) {
     if (played) return true;
     if (wpAfter === null || wpAfter === undefined) return false;
     return (wpAfter - wpAfterPlayed) <= NEARLY__THRESHOLD;
