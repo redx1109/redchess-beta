@@ -9,11 +9,7 @@ const app    = express();
 const server = http.createServer(app);
 
 const allowedOrigins = [
-  'https://beta.redchess.workers.dev',
-  'https://red.redchess.workers.dev',
-  'https://redchess.workers.dev',
-  'http://localhost:3000',
-  'http://localhost:5500'
+  'https://beta.redchess.workers.dev'
 ];
 
 app.use(cors({ origin: allowedOrigins, methods: ['GET','POST'], credentials: true }));
@@ -96,6 +92,7 @@ io.on('connection', (socket) => {
     await Player.findOneAndUpdate({ username }, { socketId: socket.id, online: true });
     socket.join(username);
     console.log(`👤 Online: ${username}`);
+    socket.emit('player:confirmed');
   });
 
   socket.on('game:rejoin', async ({ roomId, username }) => {
