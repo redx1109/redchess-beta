@@ -25,6 +25,47 @@ function buildCoordLabels() {
         }
     }
 }
+
+const CLS_COLOR = {
+    brilliant:"#1baca6", great:"#5c8a3c", best:"#7FC97A",
+    excellent:"#96C964", good:"#A3C86E", book:"#A88650",
+    inaccuracy:"#F6C833", mistake:"#F0874A", blunder:"#E44E4E", miss:"#E84D39"
+};
+
+function buildMobileStrip() {
+    if (window.innerWidth > 700) return;
+    let strip = document.getElementById("mobileMovStrip");
+    if (!strip) {
+        strip = document.createElement("div");
+        strip.className = "mobile-move-strip";
+        strip.id = "mobileMovStrip";
+        const navNext = document.getElementById("navNext");
+        navNext.parentNode.insertBefore(strip, navNext);
+    }
+    strip.innerHTML = "";
+    for (let i = 1; i < positions.length; i++) {
+        const pos  = positions[i];
+        const data = analysisData[i] || {};
+        const cls  = data.classification || "best";
+        const isW  = pos.color === "w";
+        const chip = document.createElement("div");
+        chip.className   = "mob-chip";
+        chip.dataset.idx = i;
+        const num = document.createElement("span");
+        num.className   = "mob-chip-num";
+        num.textContent = isW ? Math.ceil(i / 2) + "." : "";
+        const dot = document.createElement("span");
+        dot.className        = "mob-chip-dot";
+        dot.style.background = CLS_COLOR[cls] || "#555";
+        const label = document.createElement("span");
+        label.textContent = pos.san;
+        chip.appendChild(num);
+        chip.appendChild(dot);
+        chip.appendChild(label);
+        chip.addEventListener("click", () => goToMove(i));
+        strip.appendChild(chip);
+    }
+}
 // ─── Board rendering ──────────────────────────────────────────────────────────
 
 function renderPosition(fen, highlightSqs = [], bestSqs = []) {
@@ -167,6 +208,7 @@ function buildMoveList() {
             }
         }
     }
+   buildMobileStrip();
 }
 
 function makeMoveCell(idx, san, cls) {
@@ -189,8 +231,11 @@ function updateActiveMoveCell(idx) {
     document.querySelectorAll(".move-cell").forEach(c => c.classList.remove("active"));
     const el = document.querySelector(`.move-cell[data-idx="${idx}"]`);
     if (el) { el.classList.add("active"); el.scrollIntoView({ block: "nearest" }); }
-}
 
+    document.querySelectorAll(".mob-chip").forEach(c => c.classList.remove("active"));
+    const chip = document.querySelector(`.mob-chip[data-idx="${idx}"]`);
+    if (chip) { chip.classList.add("active"); chip.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" }); }
+}
 // ─── Navigation ───────────────────────────────────────────────────────────────
 
 function goToMove(idx) {
