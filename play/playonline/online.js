@@ -90,6 +90,7 @@ let socket;
       localStorage.setItem('onlineRoom', JSON.stringify({
         roomId, white, black, myColor, opponentName
       }));
+      window._intentionalNavigation = true;
       window.location.href = '../game.html';
     });
 
@@ -365,12 +366,13 @@ window.onOnlineMove((move) => {
 
     if (typeof window.renderBoard === 'function') window.renderBoard();
     window.addEventListener('beforeunload', () => {
-  if (!window.gameOver) {
-    const r = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
-    if (r.roomId) socket?.emit('game:resign', { roomId: r.roomId });
-  }
-  });
-  });
+        if (window._intentionalNavigation) return;
+        if (!window.gameOver) {
+            const r = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
+            if (r.roomId) socket?.emit('game:resign', { roomId: r.roomId });
+        }
+    });
+    });
 
   // FIX 1: getOnlinePlayers is now INSIDE the IIFE so it can access SERVER_URL.
   // Previously it was outside and threw ReferenceError: SERVER_URL is not defined.
