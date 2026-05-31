@@ -300,6 +300,16 @@ io.on('connection', (socket) => {
         const idx = matchmakingQueue.findIndex(p => p.username === username);
         if (idx !== -1) matchmakingQueue.splice(idx, 1);
         console.log(`👋 Offline: ${username}`);
+
+        // ← NEW: tell opponent their game ended if a room exists
+        const activeRoom = await Room.findOne({
+          $or: [{ white: username }, { black: username }]
+        });
+        if (activeRoom) {
+          socket.to(activeRoom.roomId).emit('game:opponent_left');
+          await Room.deleteOne({ roomId: activeRoom.roomId });
+          console.log(`🏳️ Room ${activeRoom.roomId} closed — ${username} disconnected`);
+        }
       }
     } catch (err) {
       console.error('[disconnect]', err.message);
