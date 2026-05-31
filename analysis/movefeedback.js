@@ -408,6 +408,23 @@ function showMoveDetail(idx, positions, analysisData, isWhiteTurn) {
             opening.style.display = "none";
         }
     }
+    const statusBar = document.getElementById("statusBar");
+    if (statusBar) {
+        if (data.classification === "book" && data.fenAfter) {
+            const name = lookupOpening(data.fenAfter);
+            statusBar.textContent = name || "";
+        } else {
+            // try previous positions for opening name
+        let openingName = "";
+        for (let i = idx; i >= 0; i--) {
+            if (analysisData[i] && analysisData[i].fenAfter) {
+                const n = lookupOpening(analysisData[i].fenAfter);
+                if (n) { openingName = n; break; }
+            }
+        }
+        statusBar.textContent = openingName;
+    }
+}
 }
 
 function buildClassSummary(analysisData) {
