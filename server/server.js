@@ -24,6 +24,17 @@ mongoose.connect(process.env.MONGO_URI, { family: 4, serverSelectionTimeoutMS: 5
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.error('❌ MongoDB connection failed:', err.message));
 
+// FIX 2: Clear stale online=true players left over from previous server instance
+// (Railway free tier restarts frequently; disconnect handlers don't always fire on crash)
+mongoose.connection.once('open', async () => {
+  try {
+    const cleared = await Player.updateMany({ online: true }, { online: false, socketId: null });
+    console.log(`✅ Cleared ${cleared.modifiedCount} stale online player(s)`);
+  } catch (err) {
+    console.error('[startup cleanup]', err.message);
+  }
+});
+
 const playerSchema = new mongoose.Schema({
   username:  { type: String, required: true, unique: true, trim: true, maxlength: 20 },
   socketId:  { type: String, default: null },
@@ -48,9 +59,8 @@ const matchmakingQueue = [];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// FIX 3: look up a live socket by username via the active socket registry
-// instead of the stale socketId stored in MongoDB. The DB value can be
-// outdated if the player reconnected since their last player:online emit.
+// Look up a live socket by username via the active socket registry
+// instead of the stale socketId stored in MongoDB.
 function getLiveSocket(username) {
   for (const [, sock] of io.sockets.sockets) {
     if (sock.data.username === username) return sock;
@@ -109,25 +119,39 @@ app.post('/api/username/register', async (req, res) => {
   }
 });
 
+// FIX 3: Use live socket registry for accurate online status instead of stale DB field
 app.get('/api/players/search', async (req, res) => {
   try {
     const q = (req.query.q || '').trim();
     if (q.length < 2) return res.json({ players: [] });
+
     const players = await Player.find({ username: { $regex: new RegExp(q, 'i') } })
-      .limit(10).select('username online -_id');
-    res.json({ players });
+      .limit(10).select('username -_id');
+
+    // Check live socket registry for real-time online status
+    const result = players.map(p => ({
+      username: p.username,
+      online: !!getLiveSocket(p.username)
+    }));
+
+    res.json({ players: result });
   } catch (err) {
     console.error('[/api/players/search]', err.message);
     res.json({ players: [] });
   }
 });
 
-// FIX 1: moved above server.listen() so it's registered in correct middleware order
+// FIX 1: Use live socket registry — 100% accurate, no DB staleness
+// Previously queried DB for online:true which was unreliable after server restarts
 app.get('/api/players/online', async (req, res) => {
   try {
-    const players = await Player.find({ online: true })
-      .limit(50).select('username -_id');
-    res.json({ players });
+    const onlinePlayers = [];
+    for (const [, sock] of io.sockets.sockets) {
+      if (sock.data.username) {
+        onlinePlayers.push({ username: sock.data.username });
+      }
+    }
+    res.json({ players: onlinePlayers });
   } catch (err) {
     console.error('[/api/players/online]', err.message);
     res.json({ players: [] });
@@ -170,8 +194,9 @@ io.on('connection', (socket) => {
     try {
       const from = socket.data.username;
       if (!from || !to || from === to) return;
-      const target = await Player.findOne({ username: to });
-      if (!target || !target.online)
+      // FIX 3: check live socket instead of stale DB online field
+      const targetSocket = getLiveSocket(to);
+      if (!targetSocket)
         return socket.emit('match:error', { message: `${to} is offline or doesn't exist` });
       io.to(to).emit('match:incoming', { from });
       console.log(`⚔️  Match request: ${from} → ${to}`);
@@ -187,7 +212,6 @@ io.on('connection', (socket) => {
       const roomId = [from, to].sort().join('_') + '_' + Date.now();
       const white  = Math.random() < 0.5 ? from : to;
       const black  = white === from ? to : from;
-      // FIX 3: use getLiveSocket instead of stale DB socketId
       await startGame(roomId, white, black);
     } catch (err) {
       console.error('[match:accept]', err.message);
@@ -213,7 +237,6 @@ io.on('connection', (socket) => {
         const roomId   = [username, opponent.username].sort().join('_') + '_' + Date.now();
         const white    = Math.random() < 0.5 ? username : opponent.username;
         const black    = white === username ? opponent.username : username;
-        // FIX 3: use getLiveSocket instead of stale DB socketId
         await startGame(roomId, white, black);
       } else {
         matchmakingQueue.push({ username, socketId: socket.id });
