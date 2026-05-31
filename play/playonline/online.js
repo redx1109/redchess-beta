@@ -293,21 +293,28 @@ let socket;
     // the socket reconnects or load fires again. Previously a fresh listener
     // was stacked every load, causing endGame() to fire multiple times.
     if (!_gameOverBound) {
-      _gameOverBound = true;
-      socket.on('game:over', ({ reason, loser }) => {
-        if (reason === 'draw') {
-          window.endGame('Draw — Both players agreed!');
-        } else {
-          const winnerName = window._getPlayerName(
-            loser === window.getUsername?.()
-              ? (room.myColor === 'w' ? 'b' : 'w')
-              : room.myColor
-          );
-          window.endGame(`${loser} resigned — ${winnerName} wins!`);
-        }
-      });
-    }
+  _gameOverBound = true;
 
+  socket.on('game:over', ({ reason, loser }) => {
+    if (reason === 'draw') {
+      window.endGame('Draw — Both players agreed!');
+    } else {
+      const winnerName = window._getPlayerName(
+        loser === window.getUsername?.()
+          ? (room.myColor === 'w' ? 'b' : 'w')
+          : room.myColor
+      );
+      window.endGame(`${loser} resigned — ${winnerName} wins!`);
+    }
+  });
+
+  // ← NEW: opponent closed tab / lost connection
+  socket.on('game:opponent_left', () => {
+    const myName = window.getUsername?.() || 'You';
+    window.endGame(`Opponent disconnected — ${myName} wins!`);
+    localStorage.removeItem('onlineRoom');
+  });
+}
     // Flip board labels for black
     const flipped = room.myColor === 'b';
     const ranks = flipped ? ['1','2','3','4','5','6','7','8'] : ['8','7','6','5','4','3','2','1'];
@@ -341,6 +348,12 @@ let socket;
     });
 
     if (typeof window.renderBoard === 'function') window.renderBoard();
+    window.addEventListener('beforeunload', () => {
+  if (!window.gameOver) {
+    const r = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
+    if (r.roomId) socket?.emit('game:resign', { roomId: r.roomId });
+  }
+  });
   });
 
   // FIX 1: getOnlinePlayers is now INSIDE the IIFE so it can access SERVER_URL.
