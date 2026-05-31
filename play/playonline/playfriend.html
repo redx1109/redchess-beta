@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedChess — Play Friend</title>
+    <link rel="stylesheet" href="../game.css">
+    <link rel="stylesheet" href="playonline.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+    <link rel="icon" href="../../favicon.png">
+    <link rel="apple-touch-icon" href="../../favicon.png">
+    <link rel="manifest" href="../../manifest.json">
+    <style>
+        #board, #board *, #arrowLayer {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+        .game-layout {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: flex-start !important;
+            justify-content: center !important;
+            gap: 2rem !important;
+            padding-top: 64px !important;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .board-col-outer {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .move-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            width: 200px;
+            min-width: 160px;
+            margin-top: 0;
+            padding-top: 2.2rem;
+        }
+        .mobile-nav {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            width: 96vw;
+            gap: 8px;
+            margin: 0 auto;
+        }
+        .mobile-nav button {
+            flex: 1;
+            padding: 12px 0;
+            background: transparent;
+            border: 1px solid #2e2a22;
+            border-radius: 2px;
+            color: #c9a84c;
+            font-family: 'Cinzel', serif;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .mobile-nav button:active { background: rgba(201,168,76,0.12); border-color: #c9a84c; }
+        .mobile-nav .nav-live { color: #6b6352; border-color: #2e2a22; }
+        .mobile-nav .nav-live.in-history { color: #e8dfc8; border-color: #4a4232; }
+        .player-tag-row {
+            width: 100%;
+            display: flex;
+            justify-content: flex-start;
+            padding: 0 4px;
+            box-sizing: border-box;
+        }
+        .code-boxes { display: flex; gap: 8px; justify-content: center; margin: 0.5rem 0; }
+        .code-box-input {
+            width: 44px; height: 54px; text-align: center;
+            font-family: 'Cinzel', serif; font-size: 22px; font-weight: 600;
+            letter-spacing: 0; color: #e8dfc8;
+            background: rgba(20,17,13,0.7); border: 1px solid #3a3426;
+            border-radius: 4px; outline: none; caret-color: #c9a84c;
+            transition: border-color 0.18s, box-shadow 0.18s;
+            text-transform: uppercase;
+        }
+        .code-box-input:focus { border-color: #c9a84c; box-shadow: 0 0 0 2px rgba(201,168,76,0.18); }
+        .conn-dot {
+            display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+            margin-left: 6px; vertical-align: middle; transition: background 0.4s;
+        }
+        .conn-dot--good { background: #4caf7a; box-shadow: 0 0 4px rgba(76,175,122,0.6); }
+        .conn-dot--warn { background: #e0a030; box-shadow: 0 0 4px rgba(224,160,48,0.6); }
+        .conn-dot--bad  { background: #e05555; box-shadow: 0 0 4px rgba(224,85,85,0.6); }
+        .conn-dot--off  { background: transparent; box-shadow: none; }
+        #drawBanner {
+            display: none; position: fixed; top: 56px; left: 50%;
+            transform: translateX(-50%); z-index: 200;
+            background: #1a1710; border: 1px solid #c9a84c; border-radius: 6px;
+            padding: 10px 18px; align-items: center; gap: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6); white-space: nowrap;
+        }
+        #drawBanner span { font-family: 'Cinzel', serif; font-size: 12px; color: #e8dfc8; letter-spacing: 0.05em; }
+        .draw-banner-btn {
+            font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.08em;
+            padding: 5px 14px; border-radius: 3px; cursor: pointer; border: 1px solid;
+            transition: background 0.18s;
+        }
+        .draw-banner-btn--accept { background: rgba(76,175,122,0.15); border-color: #4caf7a; color: #4caf7a; }
+        .draw-banner-btn--accept:hover { background: rgba(76,175,122,0.28); }
+        .draw-banner-btn--decline { background: transparent; border-color: #4a4232; color: #7a7060; }
+        .draw-banner-btn--decline:hover { background: rgba(255,255,255,0.05); color: #e8dfc8; }
+        .action-btns { position: fixed; top: 0.55rem; right: 0.9rem; z-index: 50; display: flex; gap: 6px; align-items: center; }
+        .action-btns .resign-btn, .action-btns .draw-btn { font-size: 11px; padding: 6px 12px; position: static; }
+        .resign-btn--mobile { display: none; position: static !important; }
+        .resign-btn--panel {
+            display: block !important; position: static !important;
+            top: unset !important; right: unset !important; left: unset !important; bottom: unset !important;
+            width: 100%; box-sizing: border-box; margin-top: 0.2rem;
+        }
+        .draw-btn {
+            background: transparent; border: 1px solid #3a3426; border-radius: 2px;
+            color: #7a7060; font-family: 'Cinzel', serif; font-size: 11px;
+            letter-spacing: 0.08em; cursor: pointer; padding: 6px 12px;
+            transition: border-color 0.2s, color 0.2s; display: none;
+        }
+        .draw-btn:hover:not(:disabled) { border-color: #c9a84c; color: #c9a84c; }
+        .draw-btn:disabled { opacity: 0.5; cursor: default; }
+        .lobby-code-box { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 1.5rem; }
+        .lobby-code-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+        .lobby-btn-sm {
+            font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.1em;
+            padding: 8px 18px; background: transparent; border: 1px solid #c9a84c;
+            border-radius: 2px; color: #c9a84c; cursor: pointer; transition: background 0.2s;
+        }
+        .lobby-btn-sm:hover { background: rgba(201,168,76,0.12); }
+        .lobby-btn-sm--ghost { border-color: #3a3426; color: #7a7060; }
+        .lobby-btn-sm--ghost:hover { border-color: #c9a84c; color: #c9a84c; }
+
+        @media (max-width: 700px) {
+            body { overflow-x: hidden; overflow-y: auto; }
+            .back-btn { position: fixed; top: 0.75rem; left: 0.9rem; z-index: 50; font-size: 14px; }
+            .turn-indicator { position: fixed; top: 0.75rem; left: 50%; transform: translateX(-50%); z-index: 50; font-size: 12px; white-space: nowrap; }
+            .action-btns { top: 0.5rem; right: 0.5rem; gap: 4px; }
+            .action-btns .resign-btn, .action-btns .draw-btn { font-size: 10px; padding: 5px 9px; }
+            .resign-btn--mobile { display: block !important; }
+            .resign-btn--panel  { display: none  !important; }
+            .game-layout { display: flex !important; flex-direction: column !important; align-items: center !important; gap: 1rem !important; padding-top: 48px !important; padding-bottom: 24px !important; width: 100vw !important; min-height: 100vh !important; box-sizing: border-box; }
+            .board-col-outer { display: flex !important; flex-direction: column !important; align-items: center !important; width: 96vw !important; }
+            .board-wrap { display: flex !important; flex-direction: row !important; align-items: center !important; width: 96vw !important; max-width: 96vw !important; gap: 4px !important; }
+            .board-col { display: flex !important; flex-direction: column !important; flex: 1 !important; }
+            .board-container { width: 100% !important; aspect-ratio: 1 / 1 !important; position: relative !important; }
+            #board { width: 100% !important; height: 100% !important; }
+            #arrowLayer { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; pointer-events: none; }
+            .rank-labels { display: flex !important; flex-direction: column !important; justify-content: space-around !important; align-self: stretch !important; width: 18px !important; font-size: 10px !important; text-align: center !important; }
+            .file-labels { display: flex !important; justify-content: space-around !important; width: 100% !important; font-size: 10px !important; padding: 2px 0 !important; }
+            .mobile-nav { display: flex !important; }
+            .move-panel { width: 96vw !important; max-width: 96vw !important; min-width: unset !important; display: flex !important; flex-direction: column !important; gap: 0.6rem !important; padding-top: 0 !important; }
+            .panel-label { font-size: 10px !important; letter-spacing: 0.25em !important; }
+            .move-log { max-height: 160px !important; overflow-y: auto !important; font-size: 13px !important; }
+            .analyze-btn { width: 100% !important; padding: 14px 0 !important; font-size: 11px !important; }
+            .player-tag-row { width: 96vw !important; }
+            .code-box-input { width: 38px; height: 46px; font-size: 18px; }
+            .code-boxes { gap: 6px; }
+            #drawBanner { top: 48px; padding: 8px 12px; gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-texture"></div>
+    <canvas id="c" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         LOBBY OVERLAY
+    ══════════════════════════════════════════════════════════════ -->
+    <div id="lobbyOverlay">
+
+        <a href="../bot-select.html" class="lobby-back">← Back</a>
+
+        <!-- ── Play Friend menu ── -->
+        <div class="lobby-view" id="viewMenu" style="display:flex; flex-direction:column; align-items:center;">
+            <div class="lobby-title">Play a Friend</div>
+            <div class="lobby-subtitle">Challenge a friend across the board</div>
+            <div class="lobby-cards">
+                <div class="lobby-card">
+                    <div class="lobby-card-icon">♔</div>
+                    <div class="lobby-card-title">Create Game</div>
+                    <p class="lobby-card-desc">Generate a code and share it with your friend. You'll play as White.</p>
+                    <button class="lobby-btn" id="btnCreate">CREATE GAME</button>
+                </div>
+                <div class="lobby-divider"></div>
+                <div class="lobby-card">
+                    <div class="lobby-card-icon">♟</div>
+                    <div class="lobby-card-title">Join Game</div>
+                    <p class="lobby-card-desc">Enter the code your friend shared to join their game. You'll play as Black.</p>
+                    <button class="lobby-btn lobby-btn-ghost" id="btnShowJoin">JOIN GAME</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Hosting view ── -->
+        <div class="lobby-view" id="viewCreate" style="display:none; flex-direction:column; align-items:center; width:100%; max-width:480px; padding:0 1.5rem; box-sizing:border-box;">
+            <div class="lobby-title">Your Game Code</div>
+            <div class="lobby-subtitle">Share the code or link with your opponent</div>
+            <div class="lobby-code-box">
+                <div class="lobby-code" id="gameCode">------</div>
+                <div class="lobby-code-actions">
+                    <button class="lobby-btn-sm" id="btnCopyCode">COPY CODE</button>
+                    <button class="lobby-btn-sm lobby-btn-sm--ghost" id="btnShareLink">SHARE LINK</button>
+                </div>
+            </div>
+            <div class="lobby-waiting" style="margin-top:2.5rem;">
+                <div class="lobby-spinner"></div>
+                <div class="lobby-status" id="statusCreate">Waiting for opponent…</div>
+            </div>
+            <button class="lobby-btn lobby-btn-ghost" id="btnCreateBack" style="margin-top:2.5rem; max-width:200px;">← BACK</button>
+        </div>
+
+        <!-- ── Join view ── -->
+        <div class="lobby-view" id="viewJoin" style="display:none; flex-direction:column; align-items:center; width:100%; max-width:380px; padding:0 1.5rem; box-sizing:border-box; gap:1rem;">
+            <div class="lobby-title">Join Game</div>
+            <div class="lobby-subtitle">Enter the code your opponent shared</div>
+            <div class="code-boxes" id="codeBoxes">
+                <input class="code-box-input" type="text" maxlength="1" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="text" aria-label="Code digit 1">
+                <input class="code-box-input" type="text" maxlength="1" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="text" aria-label="Code digit 2">
+                <input class="code-box-input" type="text" maxlength="1" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="text" aria-label="Code digit 3">
+                <input class="code-box-input" type="text" maxlength="1" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="text" aria-label="Code digit 4">
+                <input class="code-box-input" type="text" maxlength="1" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="text" aria-label="Code digit 5">
+                <input class="code-box-input" type="text" maxlength="1" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="text" aria-label="Code digit 6">
+            </div>
+            <div class="lobby-status" id="statusJoin">Enter the 6-character code your opponent shared.</div>
+            <button class="lobby-btn" id="btnJoinConfirm" style="margin-top:0.6rem;">CONNECT</button>
+            <button class="lobby-btn lobby-btn-ghost" id="btnJoinBack">← BACK</button>
+        </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         DISCONNECT OVERLAY
+    ══════════════════════════════════════════════════════════════ -->
+    <div id="disconnectOverlay">
+        <p class="lobby-status"></p>
+        <div class="lobby-title" style="margin:0 0 0.4rem;">Connection Lost</div>
+        <div class="lobby-status" style="margin:0 0 1.6rem;">Your opponent disconnected.</div>
+        <button class="lobby-btn" id="btnDisconnectRematch" style="max-width:220px; margin-bottom:0.6rem;">PLAY AGAIN</button>
+        <button class="lobby-btn lobby-btn-ghost" id="btnDisconnectBack" style="max-width:220px;">← BACK TO MENU</button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         DRAW OFFER BANNER
+    ══════════════════════════════════════════════════════════════ -->
+    <div id="drawBanner">
+        <span>Opponent offers a draw</span>
+        <button class="draw-banner-btn draw-banner-btn--accept" id="btnDrawAccept">Accept</button>
+        <button class="draw-banner-btn draw-banner-btn--decline" id="btnDrawDecline">Decline</button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         GAME UI
+    ══════════════════════════════════════════════════════════════ -->
+    <a href="../bot-select.html" class="back-btn">← Back</a>
+
+    <div class="turn-indicator" id="turnIndicator">
+        White's Turn<span class="conn-dot conn-dot--off" id="connQualityDot" title=""></span>
+    </div>
+
+    <div class="action-btns">
+        <button class="draw-btn" id="drawBtn">Offer Draw</button>
+        <button class="resign-btn resign-btn--mobile" id="resignBtnMobile" onclick="resignGame()">Resign</button>
+    </div>
+
+    <main class="game-layout">
+        <div class="board-col-outer">
+            <div class="player-tag-row">
+                <div class="player-tag" id="playerTagTop">Opponent</div>
+            </div>
+            <div class="board-wrap">
+                <div class="rank-labels" id="rankLabels"></div>
+                <div class="board-col">
+                    <div class="board-container" id="boardContainer">
+                        <div id="board"></div>
+                        <svg id="arrowLayer" xmlns="http://www.w3.org/2000/svg"></svg>
+                    </div>
+                    <div class="file-labels" id="fileLabels"></div>
+                </div>
+            </div>
+            <div class="player-tag-row">
+                <div class="player-tag" id="playerTagBottom">You</div>
+            </div>
+            <div class="mobile-nav" id="mobileNav">
+                <button onclick="mobileNavPrev()">&#8249; Prev</button>
+                <button class="nav-live" id="navLiveBtn" onclick="mobileNavLive()">Live</button>
+                <button onclick="mobileNavNext()">Next &#8250;</button>
+            </div>
+        </div>
+        <div class="move-panel">
+            <div class="panel-label">Move History</div>
+            <div class="move-log" id="moveLog"></div>
+            <button class="resign-btn resign-btn--panel" id="resignBtn" onclick="resignGame()">Resign</button>
+            <button class="analyze-btn" id="analyzeBtn" style="display:none" onclick="location.href='../../analysis/analysis.html'">Analyze Game</button>
+            <button class="analyze-btn" id="rematchBtn" style="display:none">Rematch</button>
+        </div>
+    </main>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         SCRIPTS
+    ══════════════════════════════════════════════════════════════ -->
+    <script>
+        try { localStorage.removeItem('botSettings'); } catch(e) {}
+        try { localStorage.removeItem('chessGameState'); } catch(e) {}
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+    <script src="../moveanimation.js"></script>
+    <script src="../movelogic.js"></script>
+    <script src="../persistence.js"></script>
+    <script src="../game.js"></script>
+    <script src="playonline.js"></script>
+    <script src="../../bganimation.js"></script>
+    <script src="../../music-persist.js"></script>
+    <script src="../../username-popup.js"></script>
+    <script src="../../mute-btn.js"></script>
+
+    <audio id="bgMusic" loop>
+        <source src="../../sounds/Aftertherain.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // ── Board labels ───────────────────────────────────────────────────────
+        const ranks = _flipped ? ['1','2','3','4','5','6','7','8'] : ['8','7','6','5','4','3','2','1'];
+        const files = _flipped ? ['h','g','f','e','d','c','b','a'] : ['a','b','c','d','e','f','g','h'];
+        const rl = document.getElementById('rankLabels');
+        const fl = document.getElementById('fileLabels');
+        ranks.forEach(r => { const s = document.createElement('span'); s.textContent = r; rl.appendChild(s); });
+        files.forEach(f => { const s = document.createElement('span'); s.textContent = f; fl.appendChild(s); });
+
+        // ── Mobile nav helpers ─────────────────────────────────────────────────
+        function updateLiveBtn() {
+            const btn = document.getElementById('navLiveBtn');
+            if (!btn) return;
+            if (viewIdx !== -1) btn.classList.add('in-history');
+            else btn.classList.remove('in-history');
+        }
+        function mobileNavPrev() {
+            if (viewIdx === -1) { if (posHistory.length >= 2) goToGameMove(posHistory.length - 2); }
+            else if (viewIdx > 0) goToGameMove(viewIdx - 1);
+            updateLiveBtn();
+        }
+        function mobileNavNext() {
+            if (viewIdx === -1) return;
+            if (viewIdx < posHistory.length - 1) goToGameMove(viewIdx + 1);
+            else exitHistory();
+            updateLiveBtn();
+        }
+        function mobileNavLive() { exitHistory(); updateLiveBtn(); }
+
+        // ── Swipe navigation ───────────────────────────────────────────────────
+        let _swipeStartX = null;
+        const boardContainer = document.getElementById('boardContainer');
+        boardContainer.addEventListener('touchstart', e => { _swipeStartX = e.touches[0].clientX; }, { passive: true });
+        boardContainer.addEventListener('touchend', e => {
+            if (_swipeStartX === null) return;
+            const dx = e.changedTouches[0].clientX - _swipeStartX;
+            _swipeStartX = null;
+            if (Math.abs(dx) < 40) return;
+            if (dx < 0) mobileNavNext(); else mobileNavPrev();
+        }, { passive: true });
+
+        // ── Arrow & highlight drawing ──────────────────────────────────────────
+        const boardEl2   = document.getElementById('board');
+        const arrowLayer = document.getElementById('arrowLayer');
+        let rightDragFrom = null, highlightedSquares = new Set(), arrows = [];
+
+        function getSquareFromEvent(e) {
+            const el = document.elementFromPoint(e.clientX, e.clientY);
+            if (!el) return null;
+            const sq = el.closest('.square');
+            if (!sq) return null;
+            return { row: parseInt(sq.dataset.row), col: parseInt(sq.dataset.col) };
+        }
+        function squareCenter(row, col) {
+            const rect = boardEl2.getBoundingClientRect();
+            const sqW = rect.width / 8, sqH = rect.height / 8;
+            const dc = _flipped ? 7 - col : col, dr = _flipped ? 7 - row : row;
+            return { x: dc * sqW + sqW / 2, y: dr * sqH + sqH / 2 };
+        }
+        function drawArrows() {
+            arrowLayer.innerHTML = '';
+            const rect = boardEl2.getBoundingClientRect();
+            const sqW = rect.width / 8, sqH = rect.height / 8;
+            const headSize = Math.min(sqW, sqH) * 0.28;
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+            marker.setAttribute('id', 'arrowhead'); marker.setAttribute('markerWidth', '4');
+            marker.setAttribute('markerHeight', '4'); marker.setAttribute('refX', '2.5');
+            marker.setAttribute('refY', '2'); marker.setAttribute('orient', 'auto');
+            const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            poly.setAttribute('points', '0 0, 4 2, 0 4'); poly.setAttribute('fill', 'rgba(255,170,0,0.85)');
+            marker.appendChild(poly); defs.appendChild(marker); arrowLayer.appendChild(defs);
+            for (const { fr, fc, tr, tc } of arrows) {
+                if (fr === tr && fc === tc) continue;
+                const from = squareCenter(fr, fc), to = squareCenter(tr, tc);
+                const dx = to.x - from.x, dy = to.y - from.y;
+                const len = Math.sqrt(dx*dx + dy*dy), ux = dx/len, uy = dy/len;
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', from.x); line.setAttribute('y1', from.y);
+                line.setAttribute('x2', to.x - ux * headSize * 0.8);
+                line.setAttribute('y2', to.y - uy * headSize * 0.8);
+                line.setAttribute('stroke', 'rgba(255,170,0,0.85)');
+                line.setAttribute('stroke-width', Math.min(sqW, sqH) * 0.14);
+                line.setAttribute('stroke-linecap', 'round');
+                line.setAttribute('marker-end', 'url(#arrowhead)');
+                arrowLayer.appendChild(line);
+            }
+        }
+        function applyHighlights() {
+            document.querySelectorAll('.square').forEach(sq => {
+                const key = `${sq.dataset.row},${sq.dataset.col}`;
+                sq.classList.toggle('right-highlight', highlightedSquares.has(key));
+            });
+        }
+        boardEl2.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('contextmenu', e => {
+            if (e.target.closest('#board') || e.target.closest('#arrowLayer')) e.preventDefault();
+        });
+        document.addEventListener('mousedown', e => {
+            if (e.button !== 2) return;
+            const sq = getSquareFromEvent(e); if (!sq) return; rightDragFrom = sq;
+        });
+        document.addEventListener('mouseup', e => {
+            if (e.button !== 2) return;
+            if (!rightDragFrom) return;
+            const sq = getSquareFromEvent(e);
+            if (!sq) { rightDragFrom = null; return; }
+            const { row: fr, col: fc } = rightDragFrom, { row: tr, col: tc } = sq;
+            rightDragFrom = null;
+            if (fr === tr && fc === tc) {
+                const key = `${fr},${fc}`;
+                highlightedSquares.has(key) ? highlightedSquares.delete(key) : highlightedSquares.add(key);
+                applyHighlights();
+            } else {
+                const idx = arrows.findIndex(a => a.fr===fr && a.fc===fc && a.tr===tr && a.tc===tc);
+                idx >= 0 ? arrows.splice(idx, 1) : arrows.push({ fr, fc, tr, tc });
+                drawArrows();
+            }
+        });
+        document.addEventListener('mousedown', e => {
+            if (e.button !== 0) return;
+            if (e.target.closest('#board') || e.target.closest('#arrowLayer')) e.preventDefault();
+            highlightedSquares.clear(); arrows = []; applyHighlights(); drawArrows();
+        });
+    </script>
+
+</body>
+</html>
