@@ -282,3 +282,10 @@ socket.on('game:over', ({ reason, loser }) => {
   });
 
 })();
+window.getOnlinePlayers = async function() {
+    try {
+        const res = await fetch(`${SERVER_URL}/api/players/online`);
+        const data = await res.json();
+        return data.players || [];
+    } catch(e) { return []; }
+};
