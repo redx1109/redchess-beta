@@ -101,37 +101,43 @@
 
         /* Nav strip: full width, bigger tap targets */
         /* Nav strip: small arrows + swipeable move strip */
-#screenAnalysis .nav-strip {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    padding: 6px 8px !important;
-    border-top: 1px solid rgba(255,255,255,0.06) !important;
-}
-#screenAnalysis .nav-btn#navStart,
-#screenAnalysis .nav-btn#navEnd,
-#screenAnalysis .nav-pos {
-    display: none !important;
-}
-#screenAnalysis .nav-btn#navPrev,
-#screenAnalysis .nav-btn#navNext {
-    width: 28px !important;
-    height: 28px !important;
-    flex-shrink: 0 !important;
-    font-size: 13px !important;
-    padding: 0 !important;
-    border-radius: 6px !important;
-}
-#screenAnalysis .mobile-move-strip {
-    flex: 1 !important;
-    overflow-x: auto !important;
-    display: flex !important;
-    gap: 3px !important;
-    scrollbar-width: none !important;
-    -webkit-overflow-scrolling: touch !important;
-    scroll-snap-type: x mandatory !important;
-    padding: 2px 0 !important;
-}
+        #screenAnalysis .move-list {
+            display: none !important;
+        }
+        #screenAnalysis .panel-title {
+            display: none !important;
+        }
+        #screenAnalysis .nav-strip {
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            padding: 6px 8px !important;
+            border-top: 1px solid rgba(255,255,255,0.06) !important;
+        }
+        #screenAnalysis .nav-btn#navStart,
+        #screenAnalysis .nav-btn#navEnd,
+        #screenAnalysis .nav-pos {
+            display: none !important;
+        }
+        #screenAnalysis .nav-btn#navPrev,
+        #screenAnalysis .nav-btn#navNext {
+            width: 28px !important;
+            height: 28px !important;
+            flex: none !important;
+            font-size: 13px !important;
+            padding: 0 !important;
+            border-radius: 6px !important;
+        }
+        #screenAnalysis .mobile-move-strip {
+            flex: 1 !important;
+            overflow-x: auto !important;
+            display: flex !important;
+            gap: 3px !important;
+            scrollbar-width: none !important;
+            -webkit-overflow-scrolling: touch !important;
+            scroll-snap-type: x mandatory !important;
+            padding: 2px 0 !important;
+            }
 #screenAnalysis .mobile-move-strip::-webkit-scrollbar {
     display: none !important;
 }
