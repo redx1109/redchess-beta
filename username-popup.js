@@ -199,7 +199,7 @@
     confirm.textContent = 'Checking…';
 
     try {
-        const SERVER = 'https://your-server-url.com'; // ← your actual server URL
+        const SERVER = 'https://beta.redchess.workers.dev'; // ← your actual server URL
 
         // Check availability
         const checkRes  = await fetch(`${SERVER}/api/username/check?name=${encodeURIComponent(name)}`);
