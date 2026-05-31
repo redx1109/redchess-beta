@@ -5,6 +5,11 @@
 // Requires openings.js to be loaded first (defines OPENING_BOOK):
 //   <script src="openings.js"></script>
 //   <script src="movefeedback.js"></script>
+function isNearly(played, wpAfterPlayed, wpAfter) {
+    if (played) return true;
+    if (wpAfter === null || wpAfter === undefined) return false;
+    return (wpAfter - wpAfterPlayed) <= NEARLY__THRESHOLD;
+}
 
 const CLASS_IMG_PATH = "./move_classification/";
 
@@ -137,11 +142,6 @@ function detectSacrifice(move) {
 // strict played qualifies (we can't determine "nearly " without it).
 const NEARLY__THRESHOLD = 0.02; // within 0.02 EP of the  move
 
-function isNearly(played, wpAfterPlayed, wpAfter) {
-    if (played) return true;
-    if (wpAfter === null || wpAfter === undefined) return false;
-    return (wpAfter - wpAfterPlayed) <= NEARLY__THRESHOLD;
-}
 
 // ─── Core classifier ───────────────────────────────────────────────────────────
 //
