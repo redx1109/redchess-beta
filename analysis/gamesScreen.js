@@ -13,6 +13,7 @@ function esc(str) {
 // ─── Games list screen ────────────────────────────────────────────────────────
 
 function buildGamesScreen(games, username, source) {
+    localStorage.setItem("chessUsername", username);
     const displaySource = source === "lichess" ? "Lichess" : "Chess.com";
     document.getElementById("gamesUserLabel").textContent  = `@${username} · ${displaySource}`;
     document.getElementById("gamesCountLabel").textContent = `${games.length} game${games.length !== 1 ? "s" : ""}`;
