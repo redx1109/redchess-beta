@@ -13,8 +13,18 @@ let socket;
   // Expose for getOnlinePlayers (defined at bottom, still inside IIFE now)
   let _gameOverBound = false; // FIX 5: guard so game:over listener is added once
 
+  let _socketRetries = 0;
+  const _socketMaxRetries = 30;
   function initSocket() {
     if (typeof io === 'undefined') {
+        _socketRetries++;
+        if (_socketRetries >= _socketMaxRetries) {
+          console.error('[online] socket.io failed to load after 30s — server may be down.');
+          document.querySelectorAll('.lobby-status').forEach(el => {
+            el.textContent = 'Server unreachable. Please try again later.';
+          });
+          return;
+        }
         console.warn('[online] socket.io not loaded — retrying in 1s');
         setTimeout(initSocket, 1000);
         return;
@@ -145,6 +155,14 @@ let socket;
   window.sendMatchRequest = (to) => socket?.emit('match:request', { to });
 
   window.Matchmaking = () => {
+    // Guard: if socket.io never loaded (e.g. server down / network error),
+    // socket is undefined — calling .once() on it throws immediately.
+    if (!socket) {
+      console.error('[online] Matchmaking called but socket is not ready — is the server reachable?');
+      const statusEl = document.getElementById('statusMatchmaking');
+      if (statusEl) statusEl.textContent = 'Cannot connect to server. Please try again later.';
+      return;
+    }
     localStorage.removeItem('onlineRoom');
     if (socket?.data?.username) {
       socket.emit('queue:join');
