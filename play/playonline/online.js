@@ -123,10 +123,16 @@ let socket;
   };
 
   window.sendMatchRequest  = (to)       => socket?.emit('match:request', { to });
-  window.joinMatchmaking = () => {
+  window.Matchmaking = () => {
     localStorage.removeItem('onlineRoom');
-    socket?.emit('queue:join');
-    };
+    if (socket?.data?.username) {
+        socket.emit('queue:join');
+    } else {
+        socket.once('player:confirmed', () => {
+            socket.emit('queue:join');
+        });
+    }
+  };
   window.leaveMatchmaking  = ()         => socket?.emit('queue:leave');
   window.resignOnline  = ()         => {
     const room = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
