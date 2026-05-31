@@ -44,7 +44,7 @@ const pieceFolder = S.piece || "default";
 
 function showScreen(id) {
     document.querySelectorAll(".screen").forEach(s =>
-        s.classList.toggle("hidden", s.id !== id)
+        s.classList.toggle("hidden", s.id !== id))
     window.scrollTo({ : 0, behavior: "instant" });
 }
 
