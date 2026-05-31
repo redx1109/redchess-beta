@@ -54,9 +54,10 @@ function buildMobileStrip() {
         const num = document.createElement("span");
         num.className   = "mob-chip-num";
         num.textContent = isW ? Math.ceil(i / 2) + "." : "";
-        const dot = document.createElement("span");
-        dot.className        = "mob-chip-dot";
-        dot.style.background = CLS_COLOR[cls] || "#555";
+        const dot = document.createElement("img");
+        dot.src       = CLASS_IMG_PATH + cls + ".png";
+        dot.alt       = cls;
+        dot.style.cssText = "width:13px;height:13px;object-fit:contain;flex-shrink:0;";
         const label = document.createElement("span");
         label.textContent = pos.san;
         chip.appendChild(num);
