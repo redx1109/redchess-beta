@@ -209,3 +209,9 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => console.log(`🚀 RedChess server running on port ${PORT}`));
+
+app.get('/api/players/online', async (req, res) => {
+    const players = await Player.find({ online: true })
+        .limit(50).select('username -_id');
+    res.json({ players });
+});
