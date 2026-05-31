@@ -460,6 +460,22 @@
         </div>
 
         <!-- ── Play Friend view ───────────────────────────────────────────────── -->
+        <div style="width:100%;max-width:420px;margin-bottom:1rem;">
+        <div class="rc-online-bar">
+        <div class="rc-pulse"></div>
+        <span id="rcOnlineCount" style="font-family:'Cinzel',serif;font-size:12px;color:#c9a84c;letter-spacing:0.12em;">0 ONLINE</span>
+        <span style="font-family:'Cinzel',serif;font-size:11px;color:#6b6352;letter-spacing:0.1em;">· players right now</span>
+        </div>
+        <div style="position:relative;margin-bottom:10px;">
+        <input id="rcSearchInput" type="text" placeholder="SEARCH PLAYER…" autocomplete="off" maxlength="20"
+        style="width:100%;box-sizing:border-box;background:rgba(20,17,13,0.85);border:1px solid #3a3426;border-radius:4px;color:#e8dfc8;font-family:'Cinzel',serif;font-size:13px;padding:11px 14px;outline:none;letter-spacing:0.05em;"
+        onfocus="this.style.borderColor='#c9a84c'" onblur="this.style.borderColor='#3a3426'"
+        oninput="handlePlayerSearch(this.value)">
+        </div>
+        <div id="rcResults" style="display:flex;flex-direction:column;gap:6px;">
+        <div style="font-size:12px;color:#4a4232;text-align:center;padding:16px 0;font-family:'Cinzel',serif;letter-spacing:0.1em;">TYPE TO SEARCH PLAYERS</div>
+        </div>
+        </div>
         <div class="lobby-view" id="viewPlayFriend" style="display:none">
             <div class="lobby-title">Play Online</div>
             <div class="lobby-subtitle">Challenge a friend across the board</div>
