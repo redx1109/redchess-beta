@@ -411,3 +411,23 @@
     .lobby-code { font-size: 1.7rem; }
     .lobby-back { top: 1rem; left: 1rem; }
 }
+
+
+.rc-online-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px; margin-bottom: 1rem;
+    background: rgba(201,168,76,0.07);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 4px;
+}
+.rc-pulse {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #4caf7a;
+    animation: rc-pulse 2s infinite;
+    flex-shrink: 0;
+}
+@keyframes rc-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(76,175,122,0.5); }
+    70% { box-shadow: 0 0 0 6px rgba(76,175,122,0); }
+    100% { box-shadow: 0 0 0 0 rgba(76,175,122,0); }
+}
