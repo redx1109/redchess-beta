@@ -325,7 +325,7 @@
 
         <!-- Phase 1 -->
         <div class="mode-row" id="modeRow">
-            <a class="play-bots-btn" href="playonline/playonline.html">Play Online</a>
+            <a class="play-bots-btn" href="goOnline()">Play Online</a>
             <button class="play-bots-btn" onclick="showBots()">Play Bots</button>
         </div>
 
@@ -593,6 +593,16 @@
 </audio>
 <script src="../music-persist.js"></script>
     <script src="../username-popup.js"></script>
+    <script>function goOnline() {
+    const username = typeof getUsername === 'function' && getUsername();
+    if (!username) {
+        showUsernamePopup(() => {
+            window.location.href = 'playonline/playonline.html';
+        });
+    } else {
+        window.location.href = 'playonline/playonline.html';
+    }
+}</script>
 <script src="../mute-btn.js"></script>
 </body>
 
