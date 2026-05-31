@@ -13,6 +13,8 @@ const PING_INTERVAL   = 5000;            // heartbeat every 5s
 const PING_TIMEOUT    = 15000;           // no pong for 15s → disconnected
 
 const ICE_SERVERS = [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
       {
         urls: "stun:stun.relay.metered.ca:80",
       },
