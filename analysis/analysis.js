@@ -46,7 +46,7 @@ function showScreen(id) {
     document.querySelectorAll(".screen").forEach(s =>
         s.classList.toggle("hidden", s.id !== id)
     );
-    window.scrollTo({ top: 0, behavior: "instant" });
+    window.scrollTo({ : 0, behavior: "instant" });
 }
 
 // ─── Status helper (selection screen) ────────────────────────────────────────
@@ -107,9 +107,10 @@ function startGame(pgn) {
     document.getElementById("ginfoMoves").textContent  = Math.ceil(totalPlies / 2);
 
     // Player names on board screen
-    document.getElementById("topPlayerName").textContent    = black;
-    document.getElementById("bottomPlayerName").textContent = white;
-
+    document.getElementById("topPlayerName").textContent    = boardFlipped ? white : black;
+    document.getElementById("bottomPlayerName").textContent = boardFlipped ? black : white;
+    document.querySelector("#topPlayerName").previousElementSibling.className    = "pdot " + (boardFlipped ? "white" : "black");
+    document.querySelector("#bottomPlayerName").previousElementSibling.className = "pdot " + (boardFlipped ? "black" : "white");
     // Accuracy display names
     document.getElementById("accWhiteName").textContent = white;
     document.getElementById("accBlackName").textContent = black;
@@ -141,7 +142,7 @@ function startGame(pgn) {
     document.getElementById("moveList").innerHTML = "";
     document.getElementById("moveDetail").style.display = "none";
     document.getElementById("navPos").textContent = "Start";
-
+   
     showScreen("screenStats");
     runAnalysis();
 }
