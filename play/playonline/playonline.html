@@ -458,11 +458,9 @@
 
     <script>
         // ── Board labels ───────────────────────────────────────────────────────
-        // FIX: _initFlipped is defined here first, then _flipped is derived from
-        // it. Previously _flipped was used in arrow/highlight code but never
-        // declared, causing a ReferenceError that broke all right-click arrows.
-        const _initFlipped = false;
-        let _flipped = _initFlipped; // FIX: was missing entirely — caused ReferenceError
+        // _flipped is declared and owned by game.js (loaded above).
+        // online.js sets window._flipped before game.js reads it for Black players.
+        // Do NOT redeclare it here — that causes a SyntaxError duplicate declaration.
 
         const ranks = _flipped ? ['1','2','3','4','5','6','7','8'] : ['8','7','6','5','4','3','2','1'];
         const files = _flipped ? ['h','g','f','e','d','c','b','a'] : ['a','b','c','d','e','f','g','h'];
