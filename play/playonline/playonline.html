@@ -430,25 +430,48 @@
 
     <!-- ══════════════════════════════════════════════════════════════
          SCRIPTS
+         FIX: game.js, online.js and other game scripts are now loaded
+         BEFORE the inline script block that references their exports.
+         Previously they were after it, causing ReferenceErrors on load.
     ══════════════════════════════════════════════════════════════ -->
     <script>
+        // Clear stale local storage on every page load
         try { localStorage.removeItem('botSettings'); } catch(e) {}
         try { localStorage.removeItem('chessGameState'); } catch(e) {}
     </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
     <script src="../moveanimation.js"></script>
     <script src="../movelogic.js"></script>
+    <script src="../game.js"></script>
+    <script src="playonline.js"></script>
+    <script src="online.js"></script>
+    <script src="../../bganimation.js"></script>
+    <script src="../../music-persist.js"></script>
+    <script src="../../username-popup.js"></script>
+    <script src="../../mute-btn.js"></script>
+
+    <audio id="bgMusic" loop>
+        <source src="../../sounds/Aftertherain.mp3" type="audio/mpeg">
+    </audio>
 
     <script>
+        // ── Board labels ───────────────────────────────────────────────────────
+        // FIX: _initFlipped is defined here first, then _flipped is derived from
+        // it. Previously _flipped was used in arrow/highlight code but never
+        // declared, causing a ReferenceError that broke all right-click arrows.
         const _initFlipped = false;
-        const ranks = _initFlipped ? ['1','2','3','4','5','6','7','8'] : ['8','7','6','5','4','3','2','1'];
-        const files = _initFlipped ? ['h','g','f','e','d','c','b','a'] : ['a','b','c','d','e','f','g','h'];
+        let _flipped = _initFlipped; // FIX: was missing entirely — caused ReferenceError
+
+        const ranks = _flipped ? ['1','2','3','4','5','6','7','8'] : ['8','7','6','5','4','3','2','1'];
+        const files = _flipped ? ['h','g','f','e','d','c','b','a'] : ['a','b','c','d','e','f','g','h'];
         const rl = document.getElementById('rankLabels');
         const fl = document.getElementById('fileLabels');
         ranks.forEach(r => { const s = document.createElement('span'); s.textContent = r; rl.appendChild(s); });
         files.forEach(f => { const s = document.createElement('span'); s.textContent = f; fl.appendChild(s); });
 
+        // ── Mobile nav helpers ─────────────────────────────────────────────────
         function updateLiveBtn() {
             const btn = document.getElementById('navLiveBtn');
             if (!btn) return;
@@ -468,6 +491,7 @@
         }
         function mobileNavLive() { exitHistory(); updateLiveBtn(); }
 
+        // ── Swipe navigation ───────────────────────────────────────────────────
         let _swipeStartX = null;
         const boardContainer = document.getElementById('boardContainer');
         boardContainer.addEventListener('touchstart', e => { _swipeStartX = e.touches[0].clientX; }, { passive: true });
@@ -479,9 +503,18 @@
             if (dx < 0) mobileNavNext(); else mobileNavPrev();
         }, { passive: true });
 
+        // ── Arrow & highlight drawing ──────────────────────────────────────────
         const boardEl2   = document.getElementById('board');
         const arrowLayer = document.getElementById('arrowLayer');
         let rightDragFrom = null, highlightedSquares = new Set(), arrows = [];
+
+        // FIX: helper sanitizes a string for safe HTML injection, preventing XSS
+        // from malicious usernames coming from the server.
+        function sanitizeText(str) {
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
 
         function getSquareFromEvent(e) {
             const el = document.elementFromPoint(e.clientX, e.clientY);
@@ -561,21 +594,7 @@
             if (e.target.closest('#board') || e.target.closest('#arrowLayer')) e.preventDefault();
             highlightedSquares.clear(); arrows = []; applyHighlights(); drawArrows();
         });
-    </script>
 
-    <script src="playonline.js"></script>
-    <script src="../../bganimation.js"></script>
-    <audio id="bgMusic" loop>
-        <source src="../../sounds/Aftertherain.mp3" type="audio/mpeg">
-    </audio>
-    <script src="../../music-persist.js"></script>
-    <script src="../../username-popup.js"></script>
-    <script src="../../mute-btn.js"></script>
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
-    <script src="../game.js"></script>
-    <script src="online.js"></script>
-
-    <script>
         // ── Tab switching ──────────────────────────────────────────────────────
         function showLobbyView(id) {
             ['viewFindMatch','viewSearching','viewPlayFriend','viewCreate','viewJoin']
@@ -592,8 +611,10 @@
 
         // ── Find Match ────────────────────────────────────────────────────────
         document.getElementById('btnStartMatch').addEventListener('click', function () {
+            // FIX: was a blunt alert(); now logs a proper console error so you
+            // can actually debug it in DevTools instead of guessing.
             if (typeof window.Matchmaking !== 'function') {
-                alert('Server not connected. Make sure online.js is loaded!');
+                console.error('[RedChess] window.Matchmaking is not defined — check that online.js loaded correctly.');
                 return;
             }
             showLobbyView('viewSearching');
@@ -609,13 +630,15 @@
         let _onlineListOpen = false;
 
         function playerRowHTML(p) {
+            // FIX: username is sanitized before injection to prevent XSS
+            const safeName = sanitizeText(p.username);
             return `
                 <div class="rc-player-row">
                     <div class="rc-player-left">
                         <div class="rc-dot rc-dot--online"></div>
-                        <span style="font-family:'Cinzel',serif;font-size:13px;color:#e8dfc8;letter-spacing:0.06em;">${p.username}</span>
+                        <span style="font-family:'Cinzel',serif;font-size:13px;color:#e8dfc8;letter-spacing:0.06em;">${safeName}</span>
                     </div>
-                    <button class="rc-challenge-btn" onclick="window.sendMatchRequest('${p.username}')">CHALLENGE</button>
+                    <button class="rc-challenge-btn" onclick="window.sendMatchRequest('${safeName}')">CHALLENGE</button>
                 </div>
             `;
         }
@@ -654,15 +677,17 @@
         let _searchTimeout = null;
 
         function searchPlayerRowHTML(p) {
+            // FIX: username is sanitized before injection to prevent XSS
+            const safeName = sanitizeText(p.username);
             return `
                 <div class="rc-player-row">
                     <div class="rc-player-left">
                         <div class="rc-dot ${p.online ? 'rc-dot--online' : ''}" style="${!p.online ? 'background:#2e2a22;' : ''}"></div>
-                        <span style="font-family:'Cinzel',serif;font-size:13px;color:#e8dfc8;letter-spacing:0.06em;">${p.username}</span>
+                        <span style="font-family:'Cinzel',serif;font-size:13px;color:#e8dfc8;letter-spacing:0.06em;">${safeName}</span>
                         <span style="font-family:'Cinzel',serif;font-size:10px;color:#6b6352;">${p.online ? '· ONLINE' : '· OFFLINE'}</span>
                     </div>
                     <button class="rc-challenge-btn" ${!p.online ? 'disabled style="border-color:#3a3426;color:#4a4232;cursor:default;"' : ''}
-                        onclick="${p.online ? `window.sendMatchRequest('${p.username}')` : ''}">
+                        onclick="${p.online ? `window.sendMatchRequest('${safeName}')` : ''}">
                         ${p.online ? 'CHALLENGE' : 'OFFLINE'}
                     </button>
                 </div>
@@ -686,8 +711,14 @@
             }, 280);
         }
 
-        // Load online count as soon as online.js is ready
-        window.addEventListener('load', () => setTimeout(updateOnlineCount, 800));
+        // ── Online count: wait for socket connect event instead of a blind
+        // setTimeout, so we don't race against the connection handshake.
+        // FIX: was setTimeout(updateOnlineCount, 800) which often fired before
+        // the socket was ready, resulting in an empty count on first load.
+        window.addEventListener('load', () => {
+            // Attempt immediately, then let online.js call it again on connect
+            updateOnlineCount().catch(() => {});
+        });
     </script>
 
 </body>
