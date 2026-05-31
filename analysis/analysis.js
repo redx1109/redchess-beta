@@ -90,6 +90,10 @@ function startGame(pgn) {
     const result = h.Result || "—";
     const date   = h.Date   || "—";
 
+    const currentUser = localStorage.getItem("chessUsername") || "";
+    const userIsBlack = currentUser &&
+    (h.Black || "").toLowerCase() === currentUser.toLowerCase();
+    boardFlipped = userIsBlack;
     // Stats screen header
     document.getElementById("statsWhiteName").textContent = white;
     document.getElementById("statsBlackName").textContent = black;
