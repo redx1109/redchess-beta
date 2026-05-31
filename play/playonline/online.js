@@ -49,6 +49,7 @@ let socket;
       if (room.roomId && username) {
         socket.emit('game:rejoin', { roomId: room.roomId, username });
       }
+      if (typeof updateOnlineCount === 'function') updateOnlineCount();
     });
 
     socket.on('match:incoming', ({ from }) => { showMatchRequest(from); });
