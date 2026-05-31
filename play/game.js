@@ -10,12 +10,42 @@ var _botCfg    = null;
 try { _botCfg = JSON.parse(localStorage.getItem('botSettings') || 'null'); } catch(e) {}
 var _botActive  = !!(_botCfg && _botCfg.active);
 var _playerCol  = _botActive ? (_botCfg.playerColor || 'w') : null;
-var _flipped    = window._flipped || (_playerCol === 'b');
+
+// FIX 1: Read window._flipped and window._playerCol set by online.js FIRST,
+// then fall back to bot config, then default. Previously game.js read these
+// at parse time before online.js had a chance to set them, so _flipped was
+// always false for online Black players and _playerCol was always null.
+var _flipped   = (window._flipped !== undefined) ? window._flipped : (_playerCol === 'b');
+
+// FIX 1 cont: For online games, online.js sets window._playerCol before game.js
+// loads (via setOnlineRole). Absorb it here so move guards work correctly.
+if (!_botActive && window._playerCol) {
+    _playerCol = window._playerCol;
+}
 
 window._botCfg    = _botCfg;
 window._botActive = _botActive;
 window._playerCol = _playerCol;
 window._flipped   = _flipped;
+
+// ─── Online game detection ─────────────────────────────────────────────────────
+// FIX 2: Detect online game so move guards behave the same as bot games
+// (only allow moving your own color on your own turn). Previously _botActive
+// was false for online games so the guard was just `piece[0] === turn`,
+// letting players select and see moves for opponent pieces.
+var _onlineRoom = null;
+try { _onlineRoom = JSON.parse(localStorage.getItem('onlineRoom') || 'null'); } catch(e) {}
+var _isOnline = !!(_onlineRoom && _onlineRoom.myColor && _onlineRoom.roomId);
+if (_isOnline && !_playerCol) _playerCol = _onlineRoom.myColor;
+
+// Unified "restricted color" check: true when we should only allow the local
+// player's color to be moved (bot games AND online games).
+function _isRestrictedTurn() {
+    return _botActive || _isOnline;
+}
+
+window._isOnline  = _isOnline;
+window._playerCol = _playerCol;
 
 // ─── Low-end device detection ──────────────────────────────────────────────────
 
@@ -27,14 +57,24 @@ window._isLowEnd = _isLowEnd;
 
 // ─── Player name helpers ───────────────────────────────────────────────────────
 
+// FIX 4: _getPlayerName now handles online games explicitly. Previously it only
+// checked _botActive, so online players always saw "Opponent" instead of the
+// real opponent username. online.js overwrites window._getPlayerName in its
+// load handler for the same reason — keep both in sync.
 function _getPlayerName(color) {
+    // Let online.js override this once it has the room data
+    if (typeof window._getPlayerName === 'function' && window._getPlayerName !== _getPlayerName) {
+        return window._getPlayerName(color);
+    }
     const me      = (typeof getUsername === 'function' && getUsername()) || 'Player';
     const botName = (typeof getBotName  === 'function' && getBotName())  || 'Bot';
     if (_botActive) return color === _playerCol ? me : botName;
+    if (_isOnline)  return color === _playerCol ? me : (_onlineRoom.opponentName || 'Opponent');
     return color === 'w' ? me : 'Opponent';
 }
 
 function _fixBotOpponentName() {
+    // FIX 5: guard — only run for actual bot games, not online games
     if (!_botActive || !_botCfg) return;
     const bot      = (typeof getBotById === 'function') ? getBotById(_botCfg.botId) : null;
     const nameEl   = document.getElementById('opponentName');
@@ -231,6 +271,9 @@ function applyMove(fromRow, fromCol, toRow, toCol) {
         }
 
         turn = next;
+        // FIX 3: always keep window.turn in sync with the local turn variable
+        // so online.js and any other external script reading window.turn stay
+        // consistent. Previously this was done but let's make sure it's explicit.
         window.turn = turn;
 
         const allMoves = [];
@@ -265,7 +308,9 @@ function applyMove(fromRow, fromCol, toRow, toCol) {
     };
 
     if (isPromotion) {
-        const isHumanTurn = !_botActive || turn === _playerCol;
+        // FIX 2 cont: use _isRestrictedTurn() so online players also get the
+        // promotion dialog (previously only bot games did via _botActive check)
+        const isHumanTurn = !_isRestrictedTurn() || turn === _playerCol;
         if (isHumanTurn) {
             _animating = true;
             renderBoard();
@@ -468,7 +513,11 @@ function renderBoard() {
                 img.decoding      = "async";
                 img.fetchPriority = "high";
 
-                const canDrag = _botActive
+                // FIX 2: use _isRestrictedTurn() so online games also restrict
+                // dragging to only the local player's pieces on their turn.
+                // Previously _botActive was false for online, so both sides'
+                // pieces were always draggable regardless of whose turn it was.
+                const canDrag = _isRestrictedTurn()
                     ? (piece[0] === _playerCol && turn === _playerCol)
                     : (piece[0] === turn);
 
@@ -514,7 +563,9 @@ function handleClick(row, col) {
     if (didDrag) { didDrag = false; return; }
     if (gameOver) return;
     if (viewIdx !== -1) { exitHistory(); return; }
-    if (_botActive && turn !== _playerCol) return;
+    // FIX 2: use _isRestrictedTurn() here too so online players can't click
+    // on their opponent's pieces during the opponent's turn.
+    if (_isRestrictedTurn() && turn !== _playerCol) return;
 
     const piece = boardState[row][col];
 
@@ -532,7 +583,8 @@ function handleClick(row, col) {
         return;
     }
 
-    const canSelect = _botActive
+    // FIX 2: same guard for piece selection
+    const canSelect = _isRestrictedTurn()
         ? (piece && piece[0] === _playerCol && turn === _playerCol)
         : (piece && piece[0] === turn);
 
@@ -572,7 +624,8 @@ window.addEventListener('load', () => {
         }
     }
 
-    if (!gameOver && _botActive && turn !== _playerCol) {
+    // Only trigger bot first move for actual bot games, not online
+    if (!gameOver && _botActive && !_isOnline && turn !== _playerCol) {
         let botFirstMoveFired = false;
         const tryFirstMove = () => {
             if (gameOver || botFirstMoveFired || posHistory.length > 1 || turn === _playerCol) return;
