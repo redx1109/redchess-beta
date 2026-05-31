@@ -57,7 +57,7 @@ function buildMobileStrip() {
         const dot = document.createElement("img");
         dot.src       = CLASS_IMG_PATH + cls + ".png";
         dot.alt       = cls;
-        dot.style.cssText = "width:13px;height:13px;object-fit:contain;flex-shrink:0;";
+        dot.style.cssText = "width:20px;height:20px;object-fit:contain;flex-shrink:0;";
         const label = document.createElement("span");
         label.textContent = pos.san;
         chip.appendChild(num);
