@@ -515,14 +515,31 @@ input[type="text"]::placeholder{color:var(--muted)}
 
 /* Move detail */
 .move-detail{
-    border:1px solid var(--border);border-radius:4px;
-    background:var(--surf);padding:11px 12px;
-    display:none;flex-direction:column;gap:6px;flex-shrink:0;
+    order: -1; 
+    border:1px solid var(--border);
+    border-radius:4px;
+    background:var(--surf);
+    padding:11px 12px;
+    display:none;
+    flex-direction:column; 
+    gap:6px;
+    flex-shrink:0;
     align-items:center;
     text-align:center;
 }
 .move-detail.visible{
     display:flex;           /* ← shown only when active */
+}
+.panel-title {
+    order: 0;
+}
+
+.move-list {
+    order: 1; 
+}
+
+.nav-strip {
+    order: 2;  
 }
 .md-header{display:flex;align-items:center;gap:9px}
 .md-icon{width:24px;height:24px;object-fit:contain}
