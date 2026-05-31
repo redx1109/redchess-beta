@@ -955,5 +955,3 @@ if (_urlCode && !checkReconnect()) {
 } else {
     checkReconnect();
 }
-
-})();
