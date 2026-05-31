@@ -324,7 +324,7 @@ let socket;
     if (rl) { rl.innerHTML = ''; ranks.forEach(r => { const s = document.createElement('span'); s.textContent = r; rl.appendChild(s); }); }
     if (fl) { fl.innerHTML = ''; files.forEach(f => { const s = document.createElement('span'); s.textContent = f; fl.appendChild(s); }); }
 
-    if (typeof window.applyMove !== 'function') {
+    if (typeof Move !== 'function') {
       console.error('[online] applyMove not found — script load order issue');
       return;
     }
@@ -333,19 +333,24 @@ let socket;
     let _onlineReceiving = false;
 
     window.applyMove = function (fromRow, fromCol, toRow, toCol) {
-      if (!_onlineReceiving && window.turn !== room.myColor) return;
-      _originalApplyMove(fromRow, fromCol, toRow, toCol);
-      if (!_onlineReceiving) {
+    // block local moves if it's not our turn
+    if (!_onlineReceiving && window.turn !== room.myColor) return;
+    _originalApplyMove(fromRow, fromCol, toRow, toCol);
+    // only send to server if this was a local move, not incoming
+    if (!_onlineReceiving) {
         window.sendOnlineMove({ from: [fromRow, fromCol], to: [toRow, toCol] }, null);
-      }
-    };
+    }
+};
 
-    window.onOnlineMove((move) => {
-      console.log('📨 received move', move);
-      _onlineReceiving = true;
-      window.applyMove(move.from[0], move.from[1], move.to[0], move.to[1]);
-      _onlineReceiving = false;
-    });
+window.onOnlineMove((move) => {
+    console.log('📨 applying opponent move', move);
+    if (!move || !move.from || !move.to) return;
+    // bypass turn guard for incoming opponent moves
+    _onlineReceiving = true;
+    // call original directly so the turn guard in our patched version is skipped
+    _originalApplyMove(move.from[0], move.from[1], move.to[0], move.to[1]);
+    _onlineReceiving = false;
+});
 
     if (typeof window.renderBoard === 'function') window.renderBoard();
     window.addEventListener('beforeunload', () => {
