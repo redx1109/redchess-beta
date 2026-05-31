@@ -1,7 +1,7 @@
 /* ══════════════════════════════════════════════════════════════
    RED CHESS — BOARD  (rendering, move list, navigation)
    ══════════════════════════════════════════════════════════════ */
-
+let boardFlipped = false;
 const boardEl = document.getElementById("board");
 
 // ─── Board rendering ──────────────────────────────────────────────────────────
@@ -17,9 +17,11 @@ function renderPosition(fen, highlightSqs = [], bestSqs = []) {
 
     for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
-            const file = String.fromCharCode(97 + col);
-            const rank = 8 - row;
-            const sq   = file + rank;
+            const r = boardFlipped ? 7 - row : row;
+            const c = boardFlipped ? 7 - col : col;
+            const file = String.fromCharCode(97 + c);
+            const rank = 8 - r;
+            const sq = file + rank;
 
             const sqEl = document.createElement("div");
             sqEl.className  = "square " + ((row + col) % 2 === 0 ? "light" : "dark");
