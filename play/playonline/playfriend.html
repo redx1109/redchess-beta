@@ -27,11 +27,6 @@
             min-height: 100vh;
             box-sizing: border-box;
         }
-        .board-col-outer {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
         .move-panel {
             display: flex;
             flex-direction: column;
@@ -41,47 +36,28 @@
             margin-top: 0;
             padding-top: 2.2rem;
         }
-        .mobile-nav {
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            width: 96vw;
-            gap: 8px;
-            margin: 0 auto;
-        }
-        .mobile-nav button {
-            flex: 1;
-            padding: 12px 0;
-            background: transparent;
-            border: 1px solid #2e2a22;
-            border-radius: 2px;
-            color: #c9a84c;
-            font-family: 'Cinzel', serif;
-            font-size: 13px;
-            cursor: pointer;
-            transition: background 0.2s, border-color 0.2s;
-        }
-        .mobile-nav button:active { background: rgba(201,168,76,0.12); border-color: #c9a84c; }
-        .mobile-nav .nav-live { color: #6b6352; border-color: #2e2a22; }
-        .mobile-nav .nav-live.in-history { color: #e8dfc8; border-color: #4a4232; }
-        .player-tag-row {
-            width: 100%;
+        /* ── Opponent nameplate ── */
+        .opponent-nameplate {
             display: flex;
-            justify-content: flex-start;
-            padding: 0 4px;
-            box-sizing: border-box;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 2px 4px;
+            font-family: 'Cinzel', serif;
+            width: 100%;
         }
-        .code-boxes { display: flex; gap: 8px; justify-content: center; margin: 0.5rem 0; }
-        .code-box-input {
-            width: 44px; height: 54px; text-align: center;
-            font-family: 'Cinzel', serif; font-size: 22px; font-weight: 600;
-            letter-spacing: 0; color: #e8dfc8;
-            background: rgba(20,17,13,0.7); border: 1px solid #3a3426;
-            border-radius: 4px; outline: none; caret-color: #c9a84c;
-            transition: border-color 0.18s, box-shadow 0.18s;
+        .opponent-avatar { font-size: 18px; line-height: 1; }
+        .opponent-name {
+            color: #f0c84c;
+            font-size: 13px;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-shadow: 0 0 14px rgba(240,200,76,0.55);
+            font-weight: 600;
         }
-        .code-box-input:focus { border-color: #c9a84c; box-shadow: 0 0 0 2px rgba(201,168,76,0.18); }
+        /* ── Connection dot ── */
         .conn-dot {
             display: inline-block; width: 8px; height: 8px; border-radius: 50%;
             margin-left: 6px; vertical-align: middle; transition: background 0.4s;
@@ -90,6 +66,7 @@
         .conn-dot--warn { background: #e0a030; box-shadow: 0 0 4px rgba(224,160,48,0.6); }
         .conn-dot--bad  { background: #e05555; box-shadow: 0 0 4px rgba(224,85,85,0.6); }
         .conn-dot--off  { background: transparent; box-shadow: none; }
+        /* ── Draw banner ── */
         #drawBanner {
             display: none; position: fixed; top: 56px; left: 50%;
             transform: translateX(-50%); z-index: 200;
@@ -107,7 +84,11 @@
         .draw-banner-btn--accept:hover { background: rgba(76,175,122,0.28); }
         .draw-banner-btn--decline { background: transparent; border-color: #4a4232; color: #7a7060; }
         .draw-banner-btn--decline:hover { background: rgba(255,255,255,0.05); color: #e8dfc8; }
-        .action-btns { position: fixed; top: 0.55rem; right: 0.9rem; z-index: 50; display: flex; gap: 6px; align-items: center; }
+        /* ── Action buttons (top-right) ── */
+        .action-btns {
+            position: fixed; top: 0.55rem; right: 0.9rem; z-index: 50;
+            display: flex; gap: 6px; align-items: center;
+        }
         .action-btns .resign-btn, .action-btns .draw-btn { font-size: 11px; padding: 6px 12px; position: static; }
         .resign-btn--mobile { display: none; position: static !important; }
         .resign-btn--panel {
@@ -123,6 +104,16 @@
         }
         .draw-btn:hover:not(:disabled) { border-color: #c9a84c; color: #c9a84c; }
         .draw-btn:disabled { opacity: 0.5; cursor: default; }
+        /* ── Code boxes (join view) ── */
+        .code-boxes { display: flex; gap: 8px; justify-content: center; margin: 0.5rem 0; }
+        .code-box-input {
+            width: 44px; height: 54px; text-align: center;
+            font-family: 'Cinzel', serif; font-size: 22px; font-weight: 600;
+            color: #e8dfc8; background: rgba(20,17,13,0.7); border: 1px solid #3a3426;
+            border-radius: 4px; outline: none; caret-color: #c9a84c;
+            transition: border-color 0.18s, box-shadow 0.18s; text-transform: uppercase;
+        }
+        .code-box-input:focus { border-color: #c9a84c; box-shadow: 0 0 0 2px rgba(201,168,76,0.18); }
         .lobby-code-box { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 1.5rem; }
         .lobby-code-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
         .lobby-btn-sm {
@@ -133,6 +124,24 @@
         .lobby-btn-sm:hover { background: rgba(201,168,76,0.12); }
         .lobby-btn-sm--ghost { border-color: #3a3426; color: #7a7060; }
         .lobby-btn-sm--ghost:hover { border-color: #c9a84c; color: #c9a84c; }
+        /* ── Mobile nav ── */
+        .mobile-nav {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            width: 96vw;
+            margin: 0 auto;
+        }
+        .mobile-nav .nav-btn {
+            width: 34px; height: 30px; flex: 0 0 auto;
+            background: transparent; border: 1px solid #2e2a22; border-radius: 3px;
+            color: #6b6352; font-size: 13px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .mobile-nav .nav-btn:active { color: #c9a84c; border-color: #c9a84c; }
+        /* ── Mobile analyze ── */
+        @media (min-width: 701px) { .analyze-btn--mobile { display: none !important; } }
 
         @media (max-width: 700px) {
             body { overflow-x: hidden; overflow-y: auto; }
@@ -143,7 +152,6 @@
             .resign-btn--mobile { display: block !important; }
             .resign-btn--panel  { display: none  !important; }
             .game-layout { display: flex !important; flex-direction: column !important; align-items: center !important; gap: 1rem !important; padding-top: 48px !important; padding-bottom: 24px !important; width: 100vw !important; min-height: 100vh !important; box-sizing: border-box; }
-            .board-col-outer { display: flex !important; flex-direction: column !important; align-items: center !important; width: 96vw !important; }
             .board-wrap { display: flex !important; flex-direction: row !important; align-items: center !important; width: 96vw !important; max-width: 96vw !important; gap: 4px !important; }
             .board-col { display: flex !important; flex-direction: column !important; flex: 1 !important; }
             .board-container { width: 100% !important; aspect-ratio: 1 / 1 !important; position: relative !important; }
@@ -152,11 +160,15 @@
             .rank-labels { display: flex !important; flex-direction: column !important; justify-content: space-around !important; align-self: stretch !important; width: 18px !important; font-size: 10px !important; text-align: center !important; }
             .file-labels { display: flex !important; justify-content: space-around !important; width: 100% !important; font-size: 10px !important; padding: 2px 0 !important; }
             .mobile-nav { display: flex !important; }
-            .move-panel { width: 96vw !important; max-width: 96vw !important; min-width: unset !important; display: flex !important; flex-direction: column !important; gap: 0.6rem !important; padding-top: 0 !important; }
-            .panel-label { font-size: 10px !important; letter-spacing: 0.25em !important; }
-            .move-log { max-height: 160px !important; overflow-y: auto !important; font-size: 13px !important; }
-            .analyze-btn { width: 100% !important; padding: 14px 0 !important; font-size: 11px !important; }
-            .player-tag-row { width: 96vw !important; }
+            .move-panel { display: flex !important; flex-direction: column !important; width: 96vw !important; max-height: none !important; gap: 0 !important; order: -1; margin-top: -4px !important; }
+            .panel-label { display: none !important; }
+            .move-log { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; overflow-x: auto !important; overflow-y: hidden !important; max-height: 40px !important; min-height: 40px; align-items: center; padding: 0 8px !important; gap: 0 !important; background: #1a1815; border-radius: 3px; scrollbar-width: none; -ms-overflow-style: none; }
+            .move-log::-webkit-scrollbar { display: none; }
+            .move-entry { display: inline-flex !important; flex-direction: row !important; align-items: center !important; gap: 0 !important; padding: 0 1px !important; border-bottom: none !important; white-space: nowrap; flex-shrink: 0; }
+            .move-num  { font-size: 11px !important; color: #6b6352; padding: 0 2px 0 6px !important; }
+            .move-w, .move-b { font-size: 13px !important; padding: 3px 4px !important; border-radius: 3px; }
+            #analyzeBtn { display: none !important; }
+            .analyze-btn--mobile { width: 96vw !important; max-width: 96vw !important; padding: 14px 0 !important; font-size: 11px !important; margin-top: 0 !important; }
             .code-box-input { width: 38px; height: 46px; font-size: 18px; }
             .code-boxes { gap: 6px; }
             #drawBanner { top: 48px; padding: 8px 12px; gap: 8px; }
@@ -172,7 +184,6 @@
          LOBBY OVERLAY
     ══════════════════════════════════════════════════════════════ -->
     <div id="lobbyOverlay">
-
         <a href="../bot-select.html" class="lobby-back">← Back</a>
 
         <!-- ── Play Friend menu ── -->
@@ -230,7 +241,6 @@
             <button class="lobby-btn" id="btnJoinConfirm" style="margin-top:0.6rem;">CONNECT</button>
             <button class="lobby-btn lobby-btn-ghost" id="btnJoinBack">← BACK</button>
         </div>
-
     </div>
 
     <!-- ══════════════════════════════════════════════════════════════
@@ -268,29 +278,25 @@
     </div>
 
     <main class="game-layout">
-        <div class="board-col-outer">
-            <div class="player-tag-row">
-                <div class="player-tag" id="playerTagTop">Opponent</div>
-            </div>
-            <div class="board-wrap">
-                <div class="rank-labels" id="rankLabels"></div>
-                <div class="board-col">
-                    <div class="board-container" id="boardContainer">
-                        <div id="board"></div>
-                        <svg id="arrowLayer" xmlns="http://www.w3.org/2000/svg"></svg>
-                    </div>
-                    <div class="file-labels" id="fileLabels"></div>
+
+        <!-- Board + labels (matches game.html structure) -->
+        <div class="board-wrap">
+            <div class="rank-labels" id="rankLabels"></div>
+            <div class="board-col">
+                <!-- Opponent nameplate above board -->
+                <div class="opponent-nameplate" id="opponentNameplate">
+                    <span class="opponent-avatar" id="opponentAvatar">♟</span>
+                    <span class="opponent-name" id="opponentName">Opponent</span>
                 </div>
-            </div>
-            <div class="player-tag-row">
-                <div class="player-tag" id="playerTagBottom">You</div>
-            </div>
-            <div class="mobile-nav" id="mobileNav">
-                <button onclick="mobileNavPrev()">&#8249; Prev</button>
-                <button class="nav-live" id="navLiveBtn" onclick="mobileNavLive()">Live</button>
-                <button onclick="mobileNavNext()">Next &#8250;</button>
+                <div class="board-container" id="boardContainer">
+                    <div id="board"></div>
+                    <svg id="arrowLayer" xmlns="http://www.w3.org/2000/svg"></svg>
+                </div>
+                <div class="file-labels" id="fileLabels"></div>
             </div>
         </div>
+
+        <!-- Move history panel -->
         <div class="move-panel">
             <div class="panel-label">Move History</div>
             <div class="move-log" id="moveLog"></div>
@@ -298,6 +304,17 @@
             <button class="analyze-btn" id="analyzeBtn" style="display:none" onclick="location.href='../../analysis/analysis.html'">Analyze Game</button>
             <button class="analyze-btn" id="rematchBtn" style="display:none">Rematch</button>
         </div>
+
+        <!-- Mobile nav -->
+        <div class="mobile-nav" id="mobileNav">
+            <button class="nav-btn" id="navPrevBtn" onclick="mobileNavPrev()" title="Previous move">◀</button>
+            <button class="nav-btn" id="navNextBtn" onclick="mobileNavNext()" title="Next move">▶</button>
+        </div>
+
+        <!-- Mobile analyze button -->
+        <button class="analyze-btn analyze-btn--mobile" id="analyzeBtnMobile"
+            onclick="location.href='../../analysis/analysis.html'" style="display:none;">Analyze Game</button>
+
     </main>
 
     <!-- ══════════════════════════════════════════════════════════════
@@ -332,12 +349,12 @@
         ranks.forEach(r => { const s = document.createElement('span'); s.textContent = r; rl.appendChild(s); });
         files.forEach(f => { const s = document.createElement('span'); s.textContent = f; fl.appendChild(s); });
 
-        // ── Mobile nav helpers ─────────────────────────────────────────────────
+        // ── Mobile nav ─────────────────────────────────────────────────────────
         function updateLiveBtn() {
-            const btn = document.getElementById('navLiveBtn');
-            if (!btn) return;
-            if (viewIdx !== -1) btn.classList.add('in-history');
-            else btn.classList.remove('in-history');
+            setTimeout(() => {
+                const active = document.querySelector('#moveLog .active-move');
+                if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }, 30);
         }
         function mobileNavPrev() {
             if (viewIdx === -1) { if (posHistory.length >= 2) goToGameMove(posHistory.length - 2); }
@@ -352,17 +369,26 @@
         }
         function mobileNavLive() { exitHistory(); updateLiveBtn(); }
 
-        // ── Swipe navigation ───────────────────────────────────────────────────
-        let _swipeStartX = null;
-        const boardContainer = document.getElementById('boardContainer');
-        boardContainer.addEventListener('touchstart', e => { _swipeStartX = e.touches[0].clientX; }, { passive: true });
-        boardContainer.addEventListener('touchend', e => {
-            if (_swipeStartX === null) return;
-            const dx = e.changedTouches[0].clientX - _swipeStartX;
-            _swipeStartX = null;
-            if (Math.abs(dx) < 40) return;
-            if (dx < 0) mobileNavNext(); else mobileNavPrev();
-        }, { passive: true });
+        // ── Auto-scroll active move ────────────────────────────────────────────
+        (function () {
+            const ml = document.getElementById('moveLog');
+            if (!ml) return;
+            new MutationObserver(() => {
+                const active = ml.querySelector('.active-move');
+                if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }).observe(ml, { attributes: true, subtree: true, attributeFilter: ['class'] });
+        })();
+
+        // ── Mirror analyze btn to mobile ───────────────────────────────────────
+        (function () {
+            const desktopBtn = document.getElementById('analyzeBtn');
+            const mobileBtn  = document.getElementById('analyzeBtnMobile');
+            if (!desktopBtn || !mobileBtn) return;
+            new MutationObserver(() => {
+                const shown = desktopBtn.style.display && desktopBtn.style.display !== 'none';
+                mobileBtn.style.display = shown ? 'block' : 'none';
+            }).observe(desktopBtn, { attributes: true, attributeFilter: ['style'] });
+        })();
 
         // ── Arrow & highlight drawing ──────────────────────────────────────────
         const boardEl2   = document.getElementById('board');
@@ -446,6 +472,13 @@
             if (e.button !== 0) return;
             if (e.target.closest('#board') || e.target.closest('#arrowLayer')) e.preventDefault();
             highlightedSquares.clear(); arrows = []; applyHighlights(); drawArrows();
+        });
+
+        // ── Auto-trigger mode from URL param ──────────────────────────────────
+        window.addEventListener('load', () => {
+            const mode = new URLSearchParams(window.location.search).get('mode');
+            if (mode === 'create') document.getElementById('btnCreate')?.click();
+            else if (mode === 'join') document.getElementById('btnShowJoin')?.click();
         });
     </script>
 
