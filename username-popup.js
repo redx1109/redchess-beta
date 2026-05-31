@@ -188,7 +188,46 @@
             setTimeout(() => { overlay.remove(); if (onDone) onDone(); }, 140);
         };
 
-        const save = () => { setUsername(input.value); dismiss(); };
+        const save = async () => {
+    const name = input.value.trim();
+    if (!name || name.length < 2) {
+        input.style.borderColor = 'rgba(192,57,43,0.9)';
+        return;
+    }
+
+    confirm.disabled = true;
+    confirm.textContent = 'Checking…';
+
+    try {
+        const SERVER = 'https://your-server-url.com'; // ← your actual server URL
+
+        // Check availability
+        const checkRes  = await fetch(`${SERVER}/api/username/check?name=${encodeURIComponent(name)}`);
+        const checkData = await checkRes.json();
+
+        if (!checkData.available) {
+            input.style.borderColor = 'rgba(192,57,43,0.9)';
+            confirm.textContent = 'Username taken!';
+            confirm.disabled = false;
+            setTimeout(() => { confirm.textContent = "Let's Play ♟"; }, 2000);
+            return;
+        }
+
+        // Register it
+        await fetch(`${SERVER}/api/username/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: name })
+        });
+
+        setUsername(name);
+        dismiss();
+    } catch (err) {
+        confirm.textContent = 'Error — try again';
+        confirm.disabled = false;
+        setTimeout(() => { confirm.textContent = "Let's Play ♟"; }, 2000);
+    }
+};
 
         close.addEventListener('click', dismiss);
         overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
