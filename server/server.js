@@ -184,6 +184,11 @@ io.on('connection', (socket) => {
         return;
       }
       socket.join(roomId);
+      socket.emit('game:state', {
+            moves: room.moves,
+            white: room.white,
+            black: room.black
+        });
       console.log(`🔄 Rejoined: ${username} → ${roomId}`);
     } catch (err) {
       console.error('[game:rejoin]', err.message);
