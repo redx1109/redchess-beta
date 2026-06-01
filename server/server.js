@@ -308,12 +308,31 @@ io.on('connection', (socket) => {
 
         // ← NEW: tell opponent their game ended if a room exists
         const activeRoom = await Room.findOne({
-          $or: [{ white: username }, { black: username }]
-        });
-        if (activeRoom) {
-          socket.to(activeRoom.roomId).emit('game:opponent_left');
-          console.log(`🏳️ Room ${activeRoom.roomId} closed — ${username} disconnected`);
-        }
+  $or: [{ white: username }, { black: username }]
+});
+if (activeRoom) {
+  console.log(`⏳ Grace period started for room ${activeRoom.roomId} — ${username} disconnected`);
+  setTimeout(async () => {
+    try {
+      const whiteOnline = !!getLiveSocket(activeRoom.white);
+      const blackOnline = !!getLiveSocket(activeRoom.black);
+      if (whiteOnline && blackOnline) {
+        // both back — do nothing
+        console.log(`✅ Both players rejoined ${activeRoom.roomId}`);
+      } else if (!whiteOnline && !blackOnline) {
+        await Room.deleteOne({ roomId: activeRoom.roomId });
+        console.log(`🏳️ Room ${activeRoom.roomId} closed — both players gone`);
+      } else {
+        const gone = !whiteOnline ? activeRoom.white : activeRoom.black;
+        io.to(activeRoom.roomId).emit('game:opponent_left');
+        await Room.deleteOne({ roomId: activeRoom.roomId });
+        console.log(`🏳️ Room ${activeRoom.roomId} closed — ${gone} disconnected`);
+      }
+    } catch (err) {
+      console.error('[disconnect grace]', err.message);
+    }
+  }, 8000);
+}
       }
     } catch (err) {
       console.error('[disconnect]', err.message);
