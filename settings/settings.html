@@ -129,12 +129,31 @@
             let _debounce = null;
             field.addEventListener('input', () => {
                 clearTimeout(_debounce);
-                _debounce = setTimeout(() => {
+                _debounce = setTimeout(async () => {
                     const v = field.value.trim();
-                    if (v) {
-                        localStorage.setItem('chessUsername', v);
-                        showSaved();
-                    }
+if (!v) return;
+hint.textContent = 'Checking availability...';
+hint.classList.remove('saved');
+try {
+    const res  = await fetch(`https://redchess-beta.up.railway.app/api/username/check?name=${encodeURIComponent(v)}`);
+    const data = await res.json();
+    if (!data.available) {
+        hint.textContent = data.error || '❌ Username already taken!';
+        hint.style.color = '#e74c3c';
+        return;
+    }
+    await fetch('https://redchess-beta.up.railway.app/api/username/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: v })
+    });
+    localStorage.setItem('chessUsername', v);
+    hint.style.color = '';
+    showSaved();
+} catch(e) {
+    localStorage.setItem('chessUsername', v);
+    showSaved();
+}
                 }, 600);
             });
 
