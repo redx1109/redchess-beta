@@ -5,6 +5,7 @@ let socket;
   let _onlineMoveCallback = null;
   let _onlineReceiving    = false; // ← moved to top scope so game:state can use it
   const SERVER_URL = 'https://redchess-beta.up.railway.app';
+  let _pendingMoves = [];
   let _gameOverBound = false;
   let _socketRetries = 0;
   const _socketMaxRetries = 30;
@@ -56,7 +57,11 @@ let socket;
 
     socket.on('game:move', ({ move, fen }) => {
       console.log('📨 received move', move);
-      if (_onlineMoveCallback) _onlineMoveCallback(move, fen);
+    if (_onlineMoveCallback) {
+      _onlineMoveCallback(move, fen);
+    } else {
+      _pendingMoves.push(move);
+    }
     });
 
     // Replay moves after page refresh rejoin
@@ -191,6 +196,9 @@ let socket;
 
   window.onOnlineMove = function (callback) {
     _onlineMoveCallback = callback;
+    while (_pendingMoves.length > 0) {
+      callback(_pendingMoves.shift());
+    }
   };
 
   window.sendOnlineMove = function (move, fen) {
