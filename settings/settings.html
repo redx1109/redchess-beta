@@ -135,9 +135,10 @@ if (!v) return;
 hint.textContent = 'Checking availability...';
 hint.classList.remove('saved');
 try {
+    const currentUsername = localStorage.getItem('chessUsername') || '';
     const res  = await fetch(`https://redchess-beta.up.railway.app/api/username/check?name=${encodeURIComponent(v)}`);
     const data = await res.json();
-    if (!data.available) {
+    if (!data.available && v.toLowerCase() !== currentUsername.toLowerCase()) {
         hint.textContent = data.error || '❌ Username already taken!';
         hint.style.color = '#e74c3c';
         return;
