@@ -645,6 +645,9 @@
     }
     // Online game — confirm first
     if (!confirm('Are you sure you want to resign?')) return;
+    const myName = (typeof getUsername === 'function' && getUsername()) || 'You';
+    const opponentName = window._onlineRoom?.opponentName || 'Opponent';
+    window.endGame(myName + ' resigned — ' + opponentName + ' wins!');
     window.resignOnline();
   }
 </script>
