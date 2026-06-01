@@ -9,7 +9,12 @@
 function endGame(message) {
     gameOver = true;
     window.gameOver = true;
-
+    try {
+        const existing = JSON.parse(localStorage.getItem('chessGameState') || '{}');
+        existing.gameOver = true;
+        existing.gameOverMessage = message;
+        localStorage.setItem('chessGameState', JSON.stringify(existing));
+    } catch(e) {}
     const indicator = document.getElementById("turnIndicator");
     if (indicator) {
         indicator.textContent = message;
@@ -259,7 +264,13 @@ function loadGameState() {
     try { saved = JSON.parse(localStorage.getItem('chessGameState') || 'null'); } catch(e) {}
     if (!saved) return false;
 
-    if (saved.gameOver) { clearSavedState(); return false; }
+    if (saved.gameOver) {
+    clearSavedState();
+        if (saved.gameOverMessage) {
+        setTimeout(() => window.endGame(saved.gameOverMessage), 300);
+        }
+        return false;
+    }
 
     boardState  = saved.boardState;
     castling    = saved.castling;
