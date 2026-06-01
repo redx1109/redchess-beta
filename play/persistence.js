@@ -26,7 +26,7 @@ function endGame(message) {
     if (resignBtn)  resignBtn.style.display  = "none";
     if (analyzeBtn) analyzeBtn.style.display = "block";
 
-    saveGameState();
+    saveGameState(message);
     saveGameForAnalysis(message);
 }
 
@@ -246,11 +246,12 @@ function exitHistory() {
 
 // ─── State persistence ─────────────────────────────────────────────────────────
 
-function saveGameState() {
+function saveGameState(gameOverMessage) {
     try {
         localStorage.setItem('chessGameState', JSON.stringify({
             boardState, castling, turn, enPassant,
-            posHistory, moveLog, gameOver
+            posHistory, moveLog, gameOver,
+            gameOverMessage: gameOverMessage || null
         }));
     } catch(e) { console.warn('saveGameState failed', e); }
 }
@@ -265,9 +266,9 @@ function loadGameState() {
     if (!saved) return false;
 
     if (saved.gameOver) {
-    clearSavedState();
+        clearSavedState();
         if (saved.gameOverMessage) {
-        setTimeout(() => window.endGame(saved.gameOverMessage), 300);
+            setTimeout(() => window.endGame(saved.gameOverMessage), 300);
         }
         return false;
     }
