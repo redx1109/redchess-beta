@@ -320,29 +320,37 @@ let socket;
     if (rl) { rl.innerHTML = ''; ranks.forEach(r => { const s = document.createElement('span'); s.textContent = r; rl.appendChild(s); }); }
     if (fl) { fl.innerHTML = ''; files.forEach(f => { const s = document.createElement('span'); s.textContent = f; fl.appendChild(s); }); }
 
-    if (typeof window.applyMove !== 'function') {
-      console.error('[online] applyMove not found — script load order issue');
-      return;
+    function waitForApplyMove(cb) {
+      if (typeof window.applyMove === 'function') return cb(window.applyMove);
+      let tries = 0;
+      const interval = setInterval(() => {
+        if (typeof window.applyMove === 'function') {
+          clearInterval(interval);
+          cb(window.applyMove);
+        } else if (++tries > 50) {
+          clearInterval(interval);
+          console.error('[online] applyMove never became available');
+        }
+      }, 100);
     }
 
-    const _originalApplyMove = window.applyMove;
+    waitForApplyMove((_originalApplyMove) => {
+      window.applyMove = function (fromRow, fromCol, toRow, toCol) {
+        if (!_onlineReceiving && window.turn !== room.myColor) return;
+        _originalApplyMove(fromRow, fromCol, toRow, toCol);
+        if (!_onlineReceiving) {
+          window.sendOnlineMove({ from: [fromRow, fromCol], to: [toRow, toCol] }, null);
+        }
+      };
 
-    window.applyMove = function (fromRow, fromCol, toRow, toCol) {
-      if (!_onlineReceiving && window.turn !== room.myColor) return;
-      _originalApplyMove(fromRow, fromCol, toRow, toCol);
-      if (!_onlineReceiving) {
-        window.sendOnlineMove({ from: [fromRow, fromCol], to: [toRow, toCol] }, null);
-      }
-    };
-
-    window.onOnlineMove((move) => {
-      console.log('📨 applying opponent move', move);
-      if (!move || !move.from || !move.to) return;
-      _onlineReceiving = true;
-      _originalApplyMove(move.from[0], move.from[1], move.to[0], move.to[1]);
-      _onlineReceiving = false;
+      window.onOnlineMove((move) => {
+        console.log('📨 applying opponent move', move);
+        if (!move || !move.from || !move.to) return;
+        _onlineReceiving = true;
+        _originalApplyMove(move.from[0], move.from[1], move.to[0], move.to[1]);
+        _onlineReceiving = false;
+      });
     });
-
     if (typeof window.renderBoard === 'function') window.renderBoard();
 
     window.addEventListener('beforeunload', () => {
