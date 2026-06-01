@@ -9,7 +9,8 @@ const app    = express();
 const server = http.createServer(app);
 
 const allowedOrigins = [
-  'https://beta.redchess.workers.dev'
+  'https://beta.redchess.workers.dev',
+  'https://redchesss.vercel.app'
 ];
 
 app.use(cors({ origin: allowedOrigins, methods: ['GET','POST'], credentials: true }));
