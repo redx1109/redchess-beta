@@ -565,7 +565,7 @@ function handleClick(row, col) {
     if (viewIdx !== -1) { exitHistory(); return; }
     // FIX 2: use _isRestrictedTurn() here too so online players can't click
     // on their opponent's pieces during the opponent's turn.
-    if (_isRestrictedTurn() && turn !== _playerCol) return;
+    if (_isRestrictedTurn() && window.turn !== _playerCol) return;
 
     const piece = boardState[row][col];
 
