@@ -266,12 +266,49 @@ function loadGameState() {
     if (!saved) return false;
 
     if (saved.gameOver) {
-        clearSavedState();
-        if (saved.gameOverMessage) {
-            setTimeout(() => window.endGame(saved.gameOverMessage), 300);
-        }
-        return false;
+    boardState  = saved.boardState;
+    castling    = saved.castling;
+    turn        = saved.turn;
+    enPassant   = saved.enPassant;
+    posHistory  = saved.posHistory;
+    moveLog     = saved.moveLog || [];
+    gameOver    = false; // temporarily false so endGame can run
+    window.boardState = boardState;
+    window.castling   = castling;
+    window.turn       = turn;
+    window.enPassant  = enPassant;
+    window.gameOver   = false;
+
+    const log = document.getElementById("moveLog");
+    if (log) {
+        log.innerHTML = "";
+        moveLog.forEach(({ notation, color, moveIdx }) => {
+            if (color === 'w') {
+                const num     = log.children.length + 1;
+                const entryEl = document.createElement("div");
+                entryEl.classList.add("move-entry");
+                entryEl.innerHTML = `<span class="move-num">${num}.</span><span class="move-w" data-move-idx="${moveIdx}">${notation}</span><span class="move-b"></span>`;
+                entryEl.querySelector(".move-w").addEventListener("click", () => goToGameMove(moveIdx));
+                log.appendChild(entryEl);
+            } else {
+                const last = log.lastElementChild;
+                if (last) {
+                    const span = last.querySelector(".move-b");
+                    span.textContent = notation;
+                    span.dataset.moveIdx = moveIdx;
+                    span.addEventListener("click", () => goToGameMove(moveIdx));
+                }
+            }
+        });
+        log.scrollTop = log.scrollHeight;
     }
+
+    clearSavedState();
+    if (saved.gameOverMessage) {
+        setTimeout(() => window.endGame(saved.gameOverMessage), 300);
+    }
+    return true;
+}
 
     boardState  = saved.boardState;
     castling    = saved.castling;
