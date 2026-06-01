@@ -634,6 +634,20 @@
             }
         })();
     </script>
+    <script>
+  function resignGame() {
+    if (window.gameOver) return;
+    if (!window._isOnline) {
+      // Local / bot game — just end it
+      const myName = (typeof getUsername === 'function' && getUsername()) || 'You';
+      window.endGame(myName + ' resigned');
+      return;
+    }
+    // Online game — confirm first
+    if (!confirm('Are you sure you want to resign?')) return;
+    window.resignOnline();
+  }
+</script>
     <script src="timecontrol.js"></script> 
     <!-- ── Background animation ── -->
     <script src="../bganimation.js"></script>
