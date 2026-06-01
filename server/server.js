@@ -312,7 +312,6 @@ io.on('connection', (socket) => {
         });
         if (activeRoom) {
           socket.to(activeRoom.roomId).emit('game:opponent_left');
-          await Room.deleteOne({ roomId: activeRoom.roomId });
           console.log(`🏳️ Room ${activeRoom.roomId} closed — ${username} disconnected`);
         }
       }
