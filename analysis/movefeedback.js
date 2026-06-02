@@ -247,7 +247,7 @@ function classifyMove(cpBefore, cpAfter, isWhite, moveIdx, playedMove, bestMove,
     if (
         !playedBest                &&
         !detectSacrifice(move)     &&  // ✅ sacrifices handled separately
-        entry?.mate === null || entry?.mate === undefined  && // ✅ skip on mate
+        Math.abs(cpAfter) < 9000 
         evalAfter < 3.0            &&
         wpBefore  >= 0.80          &&
         wpAfter   <= 0.55
