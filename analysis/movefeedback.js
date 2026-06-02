@@ -238,11 +238,19 @@ function classifyMove(cpBefore, cpAfter, isWhite, moveIdx, playedMove, bestMove,
     // ── Miss (Missed Win) ─────────────────────────────────────────────────────
     // Was decisively winning (wp ≥ 0.80) → no longer winning (wp ≤ 0.55).
     // Guard: if still above +3.00 pawns it's not a real miss.
+    // ── Miss (Missed Win) ─────────────────────────────────────────────────────────
+    // Was decisively winning (wp ≥ 0.80) → no longer winning (wp ≤ 0.55).
+    // Guards:
+    //   • still above +3.00 pawns → not a real miss
+    //   • sacrifice move → skip miss, let brilliant/blunder handle it
+    //   • mate sequence → skip miss entirely
     if (
-        !playedBest      &&
-        evalAfter < 3.0  &&
-        wpBefore >= 0.80 &&
-        wpAfter  <= 0.55
+        !playedBest                &&
+        !detectSacrifice(move)     &&  // ✅ sacrifices handled separately
+        entry?.mate === null || entry?.mate === undefined  && // ✅ skip on mate
+        evalAfter < 3.0            &&
+        wpBefore  >= 0.80          &&
+        wpAfter   <= 0.55
     ) return "miss";
 
     // ── Brilliant (!!) ────────────────────────────────────────────────────────
