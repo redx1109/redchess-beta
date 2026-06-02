@@ -300,15 +300,21 @@ function classifyMove(cpBefore, cpAfter, isWhite, moveIdx, playedMove, bestMove,
 // where wpLoss_pct = max(0, wpBefore − wpAfter) expressed as 0–100.
 // Book moves score 100 (treated as Best).
 //
-function moveAccuracy(cpBefore, cpAfter, isWhite, playerRating = 1500) {
-    const wpBefore  = playerWinProb(cpBefore, isWhite, playerRating) * 100; // 0–100
-    const wpAfter   = playerWinProb(cpAfter,  isWhite, playerRating) * 100;
-    const wpLoss    = Math.max(0, wpBefore - wpAfter);
+// ─── Move Accuracy (Chess.com CAPS2-style) ────────────────────────────────────
+function moveAccuracy(cpBefore, cpAfter, isWhite, classification, playerRating = 1500) {
+
+    // ✅ Brilliant, Great, Best, Book → always 100%
+    if (["brilliant", "great", "best", "book"].includes(classification)) {
+        return 100;
+    }
+    // everything else uses the normal formula
+    const wpBefore = playerWinProb(cpBefore, isWhite, playerRating) * 100;
+    const wpAfter  = playerWinProb(cpAfter,  isWhite, playerRating) * 100;
+    const wpLoss   = Math.max(0, wpBefore - wpAfter);
     return Math.max(0, Math.min(100,
         103.1668 * Math.exp(-0.04354 * wpLoss) - 3.1669
     ));
 }
-
 // ─── UI helpers ────────────────────────────────────────────────────────────────
 
 // Formats a centipawn / mate score for display.
