@@ -243,7 +243,9 @@ const cls = classifyMove(
     null,   // cpBestAfter not available
     1500    // playerRating — swap for actual rating if you have it
 );
-
+const whiteRating = parseInt(h.WhiteElo) || 1500;
+const blackRating = parseInt(h.BlackElo) || 1500;
+const playerRating = isWhite ? whiteRating : blackRating;
 const acc = moveAccuracy(cpBeforeWP, cpAfterWP, isWhite, cls, playerRating);
 
 entry.fenAfter       = fenAfter;
