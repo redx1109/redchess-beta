@@ -244,7 +244,7 @@ const cls = classifyMove(
     1500    // playerRating — swap for actual rating if you have it
 );
 
-const acc = moveAccuracy(cpBeforeWP, cpAfterWP, isWhite);
+const acc = moveAccuracy(cpBeforeWP, cpAfterWP, isWhite, cls, playerRating);
 
 entry.fenAfter       = fenAfter;
 entry.classification = cls;
