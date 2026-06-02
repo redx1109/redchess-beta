@@ -120,7 +120,8 @@ function playerWinProb(cp, isWhite, rating = 1500) {
 function detectSacrifice(move) {
     if (!move) return false;
 
-    const movingVal = PIECE_VALUES[move.piece] ?? 0;
+    const piece = move.promotion ? move.promotion : move.piece;
+    const movingVal = PIECE_VALUES[piece] ?? 0;
     if (movingVal < 3) return false; // must be at least a minor piece
 
     // 1. Capture sacrifice: gave up more than was taken
@@ -128,7 +129,6 @@ function detectSacrifice(move) {
         const capturedVal = PIECE_VALUES[move.captured] ?? 0;
         if (movingVal > capturedVal + 1) return true;
     }
-
     // 2. Quiet sacrifice: caller confirmed piece is left en prise
     if (move.isQuietSacrifice === true) return true;
 
