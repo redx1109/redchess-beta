@@ -85,8 +85,6 @@ function startGame(pgn) {
     totalPlies   = positions.length - 1;
 
     const h      = parsed.headers;
-    whiteRating = parseInt(h.WhiteElo) || 1500;
-    blackRating = parseInt(h.BlackElo) || 1500;
     const white  = h.White  || "White";
     const black  = h.Black  || "Black";
     const result = h.Result || "—";
@@ -169,6 +167,12 @@ function getPhase(fen, plyIndex) {
     return "mid";
 }
 
+// Use 0 for missing CP (e.g. a mate was found last move)
+function mateToCP(mate) {
+   if (mate === null || mate === undefined) return null;
+   return mate > 0 ? 10000 : -10000;
+}
+
 async function runAnalysis() {
     isAnalysing = true;
 
@@ -217,12 +221,6 @@ async function runAnalysis() {
             const prev    = analysisData[i - 1];
             const isWhite = positions[i].color === "w";
 
-            // Use 0 for missing CP (e.g. a mate was found last move)
-            function mateToCP(mate) {
-               if (mate === null || mate === undefined) return null;
-               return mate > 0 ? 10000 : -10000;
-            }
-
             // Then in the loop:
             const cpNow  = result.cp ?? mateToCP(result.mate) ?? 0;
             const cpPrev = prev.cp   ?? mateToCP(prev.mate)   ?? 0;
@@ -239,7 +237,7 @@ const sideAfter  = fenAfter.split(' ')[1];
 // Normalize to White's POV (Stockfish returns side-to-move POV)
 const cpBeforeWP = sideBefore === 'b' ? -cpPrev : cpPrev;
 const cpAfterWP  = sideAfter  === 'b' ? -cpNow  : cpNow;
-
+const playerRating = isWhite ? whiteRating : blackRating;
 const cls = classifyMove(
     cpBeforeWP,
     cpAfterWP,
@@ -250,11 +248,9 @@ const cls = classifyMove(
     positions[i].move,
     fenAfter,
     null,   // cpBestAfter not available
-    1500    // playerRating — swap for actual rating if you have it
+    playerRating  // playerRating — swap for actual rating if you have it
 );
-const whiteRating = parseInt(h.WhiteElo) || 1500;
-const blackRating = parseInt(h.BlackElo) || 1500;
-const playerRating = isWhite ? whiteRating : blackRating;
+           
 const acc = moveAccuracy(cpBeforeWP, cpAfterWP, isWhite, cls, playerRating);
 
 entry.fenAfter       = fenAfter;
