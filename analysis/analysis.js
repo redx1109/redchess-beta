@@ -215,8 +215,14 @@ async function runAnalysis() {
             const isWhite = positions[i].color === "w";
 
             // Use 0 for missing CP (e.g. a mate was found last move)
-            const cpPrev = prev.cp  ?? 0;
-            const cpNow  = result.cp ?? 0;
+            function mateToCP(mate) {
+               if (mate === null || mate === undefined) return null;
+               return mate > 0 ? 10000 : -10000;
+            }
+
+            // Then in the loop:
+            const cpNow  = result.cp ?? mateToCP(result.mate) ?? 0;
+            const cpPrev = prev.cp   ?? mateToCP(prev.mate)   ?? 0;
 
             const played  = positions[i].move
                 ? positions[i].move.from + positions[i].move.to
