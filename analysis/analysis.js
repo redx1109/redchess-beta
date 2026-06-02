@@ -35,7 +35,8 @@ let currentIdx   = 0;
 let isAnalysing  = false;
 let fetchedGames = [];
 let totalPlies   = 0;
-
+let whiteRating  = 1500;  // ✅ add this
+let blackRating  = 1500;
 const S           = JSON.parse(localStorage.getItem("chessSettings") || "{}");
 const boardTheme  = S.board || "gold";
 const pieceFolder = S.piece || "default";
@@ -84,6 +85,8 @@ function startGame(pgn) {
     totalPlies   = positions.length - 1;
 
     const h      = parsed.headers;
+    whiteRating = parseInt(h.WhiteElo) || 1500;
+    blackRating = parseInt(h.BlackElo) || 1500;
     const white  = h.White  || "White";
     const black  = h.Black  || "Black";
     const result = h.Result || "—";
