@@ -79,7 +79,7 @@ let socket;
       _onlineReceiving = false;
     });
 
-    socket.on('game:start', ({ roomId, white, black }) => {
+    socket.on('game:start', ({ roomId, white, black, tc }) => {
       const me = window.getUsername?.()
         || localStorage.getItem('chessUsername')
         || '';
@@ -90,6 +90,11 @@ let socket;
       localStorage.setItem('onlineRoom', JSON.stringify({
         roomId, white, black, myColor, opponentName
       }));
+       if (tc && tc.minutes) {
+         localStorage.setItem('chessTimeControl', JSON.stringify(tc));
+       } else {
+         localStorage.removeItem('chessTimeControl');
+       }
       // Set flag BEFORE navigating so beforeunload doesn't resign
       sessionStorage.setItem('_intentionalNav', '1');
       window.location.href = '../game.html';
@@ -178,11 +183,12 @@ let socket;
       return;
     }
     localStorage.removeItem('onlineRoom');
+    const tcData = tcKey ? { key: tcKey } : null;
     if (socket?.connected) {
-      socket.emit('queue:join');
+      socket.emit('queue:join', { tc: tcData });
     } else {
       socket.once('player:confirmed', () => {
-        socket.emit('queue:join');
+        socket.emit('queue:join', { tc: tcData });
       });
     }
   };
@@ -342,12 +348,26 @@ let socket;
           window.sendOnlineMove({ from: [fromRow, fromCol], to: [toRow, toCol] }, null);
         }
       };
-
+    socket.on('game:clock_switch', ({ times }) => {
+    // Opponent's move landed — update our local clock state to stay in sync
+    if (window.RedChessClock && typeof window.RedChessClock.syncFromServer === 'function') {
+        window.RedChessClock.syncFromServer(times);
+    }
+    });
       window.onOnlineMove((move) => {
         console.log('📨 applying opponent move', move);
         if (!move || !move.from || !move.to) return;
         _onlineReceiving = true;
         _originalApplyMove(move.from[0], move.from[1], move.to[0], move.to[1]);
+        if (!_onlineReceiving) {
+    window.sendOnlineMove({ from: [fromRow, fromCol], to: [toRow, toCol] }, null);
+    // Tell server we moved so it can relay clock state to opponent
+    if (window.RedChessClock?.isEnabled()) {
+        const times = window.RedChessClock.getTimes();
+        const room  = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
+        socket?.emit('game:clock_move', { roomId: room.roomId, times });
+    }
+}
         _onlineReceiving = false;
       });
     });
