@@ -223,7 +223,19 @@
     } else {
         _buildUI();
     }
+    // Called when opponent's move arrives — server sends authoritative times
+function syncFromServer(times) {
+    if (!_enabled) return;
+    if (typeof times.w === 'number') _timeW = times.w;
+    if (typeof times.b === 'number') _timeB = times.b;
+    // switchClock is called by applyMove patch so we just update times here
+    _updateDisplay();
+}
 
-    window.RedChessClock = { start, switchClock, isEnabled: () => _enabled };
+// Called before emitting move to server — send current times for relay
+function getTimes() {
+    return { w: _timeW, b: _timeB };
+}
 
+window.RedChessClock = { start, switchClock, isEnabled: () => _enabled, syncFromServer, getTimes };
 })();
