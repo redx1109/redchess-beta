@@ -537,10 +537,16 @@
         document.getElementById('btnStartMatch').addEventListener('click', function () {
             if (typeof window.Matchmaking !== 'function') {
                 console.error('[RedChess] window.Matchmaking is not defined — check that online.js loaded correctly.');
-                return;
+                const preset = ONLINE_TC_PRESETS[_onlineChosenTC];
+    // Save TC so timecontrol.js can read it when game.html loads
+    localStorage.setItem('chessTimeControl', JSON.stringify({
+        preset: _onlineChosenTC,
+        minutes: preset.minutes,
+        increment: preset.increment
+    }));
             }
             showLobbyView('viewSearching');
-            window.Matchmaking();
+            window.Matchmaking(_onlineChosenTC);
         });
 
         document.getElementById('btnCancelMatch').addEventListener('click', function () {
@@ -623,6 +629,21 @@
             updateOnlineCount().catch(() => {});
         });
     </script>
+    <script> const ONLINE_TC_PRESETS = {
+    bullet1:  { minutes: 1,  increment: 0 },
+    blitz3:   { minutes: 3,  increment: 0 },
+    blitz3i2: { minutes: 3,  increment: 2 },
+    blitz5:   { minutes: 5,  increment: 0 },
+    rapid10:  { minutes: 10, increment: 0 },
+    rapid15:  { minutes: 15, increment: 10 },
+};
+let _onlineChosenTC = 'blitz3';
 
+function pickOnlineTC(key) {
+    _onlineChosenTC = key;
+    document.querySelectorAll('.online-tc-btn').forEach(b => b.classList.remove('active'));
+    const btn = document.querySelector(`[data-tc="${key}"]`);
+    if (btn) btn.classList.add('active');
+}</script>
 </body>
 </html>
