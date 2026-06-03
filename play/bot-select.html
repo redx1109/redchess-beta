@@ -10,58 +10,7 @@
     <link rel="apple-touch-icon" href="../favicon.png">
     <link rel="manifest" href="../manifest.json">
     <style>
-        :root {
-            --bg:           #0e0d0b;
-            --surface:      #161410;
-            --surface2:     #1e1b16;
-            --border:       #2e2a22;
-            --border-hover: #4a4232;
-            --gold:         #c9a84c;
-            --gold-dim:     #7a6130;
-            --gold-glow:    rgba(201,168,76,0.18);
-            --text:         #e8dfc8;
-            --text-muted:   #6b6352;
-            --font-d:       'Cinzel', serif;
-            --font-b:       'Crimson Pro', serif;
-        }
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: var(--font-b);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow-x: hidden;
-            overflow-y: auto;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image:
-                radial-gradient(ellipse 80% 60% at 50% 30%, rgba(201,168,76,0.055) 0%, transparent 65%),
-                repeating-linear-gradient(45deg, transparent, transparent 60px, rgba(255,255,255,0.008) 60px, rgba(255,255,255,0.008) 61px);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .back-btn {
-            position: fixed;
-            top: 1rem; left: 1.2rem;
-            z-index: 100;
-            font-family: var(--font-b);
-            font-size: 14px;
-            color: var(--text-muted);
-            text-decoration: none;
-            letter-spacing: 0.05em;
-            transition: color 0.2s;
-        }
-        .back-btn:hover { color: var(--gold); }
+        /* ── UNIQUE to bots page — everything else lives in your shared CSS ── */
 
         .stage {
             position: relative;
@@ -145,12 +94,7 @@
         }
         .list-label.visible { opacity: 0.55; transform: translateY(0); }
 
-        .bot-list {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+        .bot-list { width: 100%; display: flex; flex-direction: column; gap: 8px; }
 
         .bot-card {
             display: flex;
@@ -170,7 +114,6 @@
         .bot-card.selected { border-color: var(--gold-dim); background: var(--surface2); box-shadow: 0 0 24px rgba(201,168,76,0.12); }
 
         .bot-icon { font-size: 30px; line-height: 1; flex-shrink: 0; width: 36px; text-align: center; }
-
         .bot-meta { flex: 1; min-width: 0; }
         .bot-header-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 3px; }
         .bot-name { font-family: var(--font-d); font-size: 13px; letter-spacing: 0.1em; color: var(--text); }
@@ -201,8 +144,8 @@
 
         .panel-bot-header { display: flex; align-items: center; gap: 14px; }
         .panel-bot-avatar { font-size: 34px; line-height: 1; flex-shrink: 0; }
-        .panel-bot-name  { font-family: var(--font-d); font-size: 15px; letter-spacing: 0.1em; color: var(--text); margin-bottom: 3px; }
-        .panel-bot-title { font-family: var(--font-b); font-size: 13px; font-style: italic; color: var(--text-muted); }
+        .panel-bot-name   { font-family: var(--font-d); font-size: 15px; letter-spacing: 0.1em; color: var(--text); margin-bottom: 3px; }
+        .panel-bot-title  { font-family: var(--font-b); font-size: 13px; font-style: italic; color: var(--text-muted); }
 
         .panel-quote {
             font-family: var(--font-b);
@@ -236,6 +179,8 @@
         .elo-readout    { display: flex; align-items: baseline; gap: 8px; }
         .elo-number     { font-family: var(--font-d); font-size: 20px; color: var(--gold); line-height: 1; }
         .elo-tier       { font-family: var(--font-b); font-size: 13px; font-style: italic; color: var(--text-muted); }
+
+        /* bots-page elo slider (different from game-page .elo-slider) */
         .elo-slider {
             -webkit-appearance: none; appearance: none;
             width: 100%; height: 3px;
@@ -263,7 +208,7 @@
             cursor: pointer; background: transparent;
             transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
         }
-        .color-opt:hover { border-color: var(--border-hover); background: rgba(255,255,255,0.02); }
+        .color-opt:hover  { border-color: var(--border-hover); background: rgba(255,255,255,0.02); }
         .color-opt.active { border-color: var(--gold-dim); background: rgba(201,168,76,0.07); box-shadow: 0 0 16px rgba(201,168,76,0.1); }
         .color-piece { font-size: 28px; line-height: 1; }
         .color-opt:nth-child(1) .color-piece { color: #f0e8d0; }
@@ -271,56 +216,6 @@
         .color-opt:nth-child(3) .color-piece { color: #2a2520; -webkit-text-stroke: 1px #6b6352; }
         .color-label { font-family: var(--font-d); font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--text-muted); }
         .color-opt.active .color-label { color: var(--gold); }
-
-        /* ── TIME CONTROL PICKER ── */
-        .tc-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
-        .tc-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            padding: 12px 6px 10px;
-            background: transparent;
-            border: 1px solid var(--border);
-            border-radius: 2px;
-            cursor: pointer;
-            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
-        }
-        .tc-btn:hover { border-color: var(--border-hover); background: rgba(255,255,255,0.02); }
-        .tc-btn.active {
-            border-color: var(--gold-dim);
-            background: rgba(201,168,76,0.07);
-            box-shadow: 0 0 16px rgba(201,168,76,0.1);
-        }
-        .tc-btn.active .tc-label { color: var(--gold); }
-        .tc-btn.active .tc-sub   { color: var(--gold-dim); }
-        .tc-icon  { font-size: 16px; line-height: 1; }
-        .tc-label { font-family: var(--font-d); font-size: 11px; letter-spacing: 0.1em; color: var(--text-muted); }
-        .tc-sub   { font-family: var(--font-b); font-size: 11px; font-style: italic; color: var(--text-muted); opacity: 0.6; }
-        .tc-none-btn {
-            grid-column: span 3;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 10px;
-            background: transparent;
-            border: 1px solid var(--border);
-            border-radius: 2px;
-            cursor: pointer;
-            font-family: var(--font-d);
-            font-size: 9px;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            transition: border-color 0.2s, color 0.2s;
-        }
-        .tc-none-btn:hover { border-color: var(--border-hover); color: var(--text); }
-        .tc-none-btn.active { border-color: var(--gold-dim); color: var(--gold); background: rgba(201,168,76,0.05); }
 
         .start-btn {
             font-family: var(--font-d);
@@ -401,7 +296,7 @@
             </div>
 
             <div class="panel-quote" id="panelQuote" style="display:none"></div>
-            <div class="panel-tags" id="panelTags"  style="display:none"></div>
+            <div class="panel-tags"  id="panelTags"  style="display:none"></div>
 
             <div class="panel-tip" id="panelTip" style="display:none">
                 <span class="panel-tip-label">Tip</span>
@@ -447,21 +342,21 @@
 
             <div class="divider"></div>
 
-            <!-- ── TIME CONTROL PICKER ── -->
+            <!-- Time Control picker -->
             <div>
                 <div class="setting-label" style="margin-bottom:12px">Time Control</div>
                 <div class="tc-grid">
-                    <button class="tc-btn" data-tc="bullet1" onclick="pickTC('bullet1')">
+                    <button class="tc-btn" data-tc="bullet1"  onclick="pickTC('bullet1')">
                         <span class="tc-icon">⚡</span>
                         <span class="tc-label">1+0</span>
                         <span class="tc-sub">Bullet</span>
                     </button>
-                    <button class="tc-btn" data-tc="bullet2" onclick="pickTC('bullet2')">
+                    <button class="tc-btn" data-tc="bullet2"  onclick="pickTC('bullet2')">
                         <span class="tc-icon">⚡</span>
                         <span class="tc-label">2+1</span>
                         <span class="tc-sub">Bullet</span>
                     </button>
-                    <button class="tc-btn" data-tc="blitz3" onclick="pickTC('blitz3')">
+                    <button class="tc-btn" data-tc="blitz3"   onclick="pickTC('blitz3')">
                         <span class="tc-icon">🔥</span>
                         <span class="tc-label">3+0</span>
                         <span class="tc-sub">Blitz</span>
@@ -471,22 +366,22 @@
                         <span class="tc-label">3+2</span>
                         <span class="tc-sub">Blitz</span>
                     </button>
-                    <button class="tc-btn" data-tc="blitz5" onclick="pickTC('blitz5')">
+                    <button class="tc-btn" data-tc="blitz5"   onclick="pickTC('blitz5')">
                         <span class="tc-icon">🔥</span>
                         <span class="tc-label">5+0</span>
                         <span class="tc-sub">Blitz</span>
                     </button>
-                    <button class="tc-btn" data-tc="rapid10" onclick="pickTC('rapid10')">
+                    <button class="tc-btn" data-tc="rapid10"  onclick="pickTC('rapid10')">
                         <span class="tc-icon">♟</span>
                         <span class="tc-label">10+0</span>
                         <span class="tc-sub">Rapid</span>
                     </button>
-                    <button class="tc-btn" data-tc="rapid15" onclick="pickTC('rapid15')">
+                    <button class="tc-btn" data-tc="rapid15"  onclick="pickTC('rapid15')">
                         <span class="tc-icon">♟</span>
                         <span class="tc-label">15+10</span>
                         <span class="tc-sub">Rapid</span>
                     </button>
-                    <button class="tc-btn" data-tc="rapid30" onclick="pickTC('rapid30')">
+                    <button class="tc-btn" data-tc="rapid30"  onclick="pickTC('rapid30')">
                         <span class="tc-icon">♟</span>
                         <span class="tc-label">30+0</span>
                         <span class="tc-sub">Rapid</span>
@@ -501,8 +396,7 @@
                     </button>
                 </div>
 
-                <!-- Custom inputs (hidden unless custom selected) -->
-                <div id="tcCustomInputs" style="display:none; margin-top:12px; display:none;">
+                <div id="tcCustomInputs" style="display:none; margin-top:12px;">
                     <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
                         <div style="display:flex;flex-direction:column;gap:4px;">
                             <span class="setting-label" style="font-size:8px;">Minutes</span>
@@ -531,9 +425,8 @@
         let selectedBotId = null;
         let chosenColor   = 'w';
         let chosenElo     = 1500;
-        let chosenTC      = 'none'; // default: no time control
+        let chosenTC      = 'none';
 
-        /* ── Time Control ── */
         const TC_PRESETS = {
             bullet1:  { minutes: 1,  increment: 0 },
             bullet2:  { minutes: 2,  increment: 1 },
@@ -550,8 +443,7 @@
             document.querySelectorAll('.tc-btn, .tc-none-btn').forEach(b => b.classList.remove('active'));
             const btn = document.querySelector(`[data-tc="${key}"]`);
             if (btn) btn.classList.add('active');
-            const customInputs = document.getElementById('tcCustomInputs');
-            customInputs.style.display = key === 'custom' ? 'flex' : 'none';
+            document.getElementById('tcCustomInputs').style.display = key === 'custom' ? 'flex' : 'none';
         }
 
         function updateCustomLabel() {
@@ -560,7 +452,6 @@
             document.getElementById('tcCustomLabel').textContent = `${m}+${i}`;
         }
 
-        /* ── Build legend bot cards ── */
         function buildLegendList() {
             const list = document.getElementById('legendList');
             BOTS.forEach(bot => {
@@ -575,7 +466,6 @@
                 pips += '</div>';
 
                 const eloLabel = `${bot.elo.toLocaleString()} <span style="font-size:10px;opacity:0.6">${bot.eloNote}</span>`;
-
                 card.innerHTML = `
                     <div class="bot-icon">${bot.avatar}</div>
                     <div class="bot-meta">
@@ -677,7 +567,6 @@
 
             localStorage.removeItem('chessGameState');
 
-            // ── Save time control to localStorage ──
             if (chosenTC && chosenTC !== 'none') {
                 let tcData;
                 if (chosenTC === 'custom') {
