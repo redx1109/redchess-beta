@@ -3,7 +3,7 @@ let socket;
 (function () {
   'use strict';
   let _onlineMoveCallback = null;
-  let _onlineReceiving    = false; // ← moved to top scope so game:state can use it
+  let _onlineReceiving    = false;
   const SERVER_URL = 'https://redchess-beta.up.railway.app';
   let _pendingMoves = [];
   let _gameOverBound = false;
@@ -57,15 +57,28 @@ let socket;
 
     socket.on('game:move', ({ move, fen }) => {
       console.log('📨 received move', move);
-    if (_onlineMoveCallback) {
-      _onlineMoveCallback(move, fen);
-    } else {
-      _pendingMoves.push(move);
-    }
+      if (_onlineMoveCallback) {
+        _onlineMoveCallback(move, fen);
+      } else {
+        _pendingMoves.push(move);
+      }
+    });
+
+    // ─── Clock sync: opponent moved, server relayed their times ──────────────
+    // We apply it AFTER our local applyMove has already switched the clock,
+    // so this corrects any drift from network latency.
+    socket.on('game:clock_switch', ({ times }) => {
+      if (window.RedChessClock && typeof window.RedChessClock.syncFromServer === 'function') {
+        window.RedChessClock.syncFromServer(times);
+      }
     });
 
     // Replay moves after page refresh rejoin
-    socket.on('game:state', ({ moves }) => {
+    socket.on('game:state', ({ moves, tc }) => {
+      // If server sends back TC (e.g. after rejoin), make sure localStorage has it
+      if (tc && tc.minutes) {
+        localStorage.setItem('chessTimeControl', JSON.stringify(tc));
+      }
       if (!moves || !moves.length) return;
       console.log(`🔄 Replaying ${moves.length} moves after rejoin`);
       _onlineReceiving = true;
@@ -83,19 +96,21 @@ let socket;
       const me = window.getUsername?.()
         || localStorage.getItem('chessUsername')
         || '';
-      console.log(':start', { me, white, black });
+      console.log(':start', { me, white, black, tc });
       const myColor      = me === white ? 'w' : 'b';
       const opponentName = me === white ? black : white;
       localStorage.removeItem('onlineRoom');
       localStorage.setItem('onlineRoom', JSON.stringify({
         roomId, white, black, myColor, opponentName
       }));
-       if (tc && tc.minutes) {
-         localStorage.setItem('chessTimeControl', JSON.stringify(tc));
-       } else {
-         localStorage.removeItem('chessTimeControl');
-       }
-      // Set flag BEFORE navigating so beforeunload doesn't resign
+
+      // Save TC from server so timecontrol.js picks it up when game.html loads
+      if (tc && tc.minutes) {
+        localStorage.setItem('chessTimeControl', JSON.stringify(tc));
+      } else {
+        localStorage.removeItem('chessTimeControl');
+      }
+
       sessionStorage.setItem('_intentionalNav', '1');
       window.location.href = '../game.html';
     });
@@ -175,7 +190,8 @@ let socket;
 
   window.sendMatchRequest = (to) => socket?.emit('match:request', { to });
 
-  window.Matchmaking = () => {
+  // ─── Matchmaking: now accepts a tcKey from the lobby ─────────────────────
+  window.Matchmaking = (tcKey) => {
     if (!socket) {
       console.error('[online] Matchmaking called but socket is not ready');
       const statusEl = document.getElementById('statusMatchmaking');
@@ -183,12 +199,12 @@ let socket;
       return;
     }
     localStorage.removeItem('onlineRoom');
-    const tcData = tcKey ? { key: tcKey } : null;
+    const payload = { tc: tcKey ? { key: tcKey } : null };
     if (socket?.connected) {
-      socket.emit('queue:join', { tc: tcData });
+      socket.emit('queue:join', payload);
     } else {
       socket.once('player:confirmed', () => {
-        socket.emit('queue:join', { tc: tcData });
+        socket.emit('queue:join', payload);
       });
     }
   };
@@ -261,7 +277,6 @@ let socket;
   })();
 
   window.addEventListener('load', function () {
-    // Clear intentional nav flag now that we've landed on game.html
     sessionStorage.removeItem('_intentionalNav');
 
     const room = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
@@ -346,35 +361,27 @@ let socket;
         _originalApplyMove(fromRow, fromCol, toRow, toCol);
         if (!_onlineReceiving) {
           window.sendOnlineMove({ from: [fromRow, fromCol], to: [toRow, toCol] }, null);
+          // Send current clock times to opponent after our move
+          if (window.RedChessClock && window.RedChessClock.isEnabled()) {
+            const times = window.RedChessClock.getTimes();
+            const r     = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
+            socket?.emit('game:clock_move', { roomId: r.roomId, times });
+          }
         }
       };
-    socket.on('game:clock_switch', ({ times }) => {
-    // Opponent's move landed — update our local clock state to stay in sync
-    if (window.RedChessClock && typeof window.RedChessClock.syncFromServer === 'function') {
-        window.RedChessClock.syncFromServer(times);
-    }
-    });
+
       window.onOnlineMove((move) => {
         console.log('📨 applying opponent move', move);
         if (!move || !move.from || !move.to) return;
         _onlineReceiving = true;
         _originalApplyMove(move.from[0], move.from[1], move.to[0], move.to[1]);
-        if (!_onlineReceiving) {
-    window.sendOnlineMove({ from: [fromRow, fromCol], to: [toRow, toCol] }, null);
-    // Tell server we moved so it can relay clock state to opponent
-    if (window.RedChessClock?.isEnabled()) {
-        const times = window.RedChessClock.getTimes();
-        const room  = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
-        socket?.emit('game:clock_move', { roomId: room.roomId, times });
-    }
-}
         _onlineReceiving = false;
       });
     });
+
     if (typeof window.renderBoard === 'function') window.renderBoard();
 
     window.addEventListener('beforeunload', () => {
-      // Skip resign if this is an intentional navigation (game:start redirect)
       if (sessionStorage.getItem('_intentionalNav')) return;
       if (!window.gameOver) {
         const r = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
