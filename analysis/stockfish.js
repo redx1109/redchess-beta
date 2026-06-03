@@ -1,7 +1,6 @@
 /* ══════════════════════════════════════════════════════════════
    RED CHESS — STOCKFISH  (engine wrapper)
    ══════════════════════════════════════════════════════════════ */
-
 let stockfish = null;
 let sfReady   = false;
 const SF_DEPTH = 15;
@@ -17,29 +16,41 @@ function initStockfish() {
     }
 }
 
-function evalPosition(fen) {
+function evalPosition(fen, onLiveEval) {
     return new Promise(resolve => {
         if (!stockfish || !sfReady) { resolve(null); return; }
+
         let best = { depth: -1, cp: null, mate: null };
         const orig = stockfish.onmessage;
+        const isWhiteTurn = fen.split(" ")[1] === "w";
+
         stockfish.onmessage = e => {
             const msg = e.data;
             if (typeof msg !== "string") return;
+
             if (msg.startsWith("info") && msg.includes("score")) {
-                const d  = (msg.match(/depth (\d+)/)        || [])[1];
-                const cp = (msg.match(/score cp (-?\d+)/)   || [])[1];
-                const mt = (msg.match(/score mate (-?\d+)/) || [])[1];
+                const d  = (msg.match(/\bdepth (\d+)/)       || [])[1];
+                const cp = (msg.match(/score cp (-?\d+)/)    || [])[1];
+                const mt = (msg.match(/score mate (-?\d+)/)  || [])[1];
+
                 if (+d > best.depth) {
                     best.depth = +d;
                     if (cp !== undefined) best.cp   = +cp;
                     if (mt !== undefined) best.mate = +mt;
+
+                    // 🔥 Live eval bar update — fires on every new depth
+                    if (onLiveEval) {
+                        onLiveEval(best.cp, best.mate, isWhiteTurn, best.depth);
+                    }
                 }
             }
+
             if (msg.startsWith("bestmove")) {
                 stockfish.onmessage = orig;
                 resolve({ cp: best.cp, mate: best.mate, bestMove: msg.split(" ")[1] });
             }
         };
+
         stockfish.postMessage("stop");
         stockfish.postMessage("position fen " + fen);
         stockfish.postMessage(`go depth ${SF_DEPTH}`);
