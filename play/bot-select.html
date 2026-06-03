@@ -627,8 +627,11 @@
 
         function showPanel() {
             const panel = document.getElementById('settingsPanel');
-            panel.classList.add('visible');
-            setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
+            panel.style.display = 'flex';          // ← add this!
+            setTimeout(() => {
+                    panel.classList.add('visible');
+                    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 30);
         }
 
         const TIERS = [
