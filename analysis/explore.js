@@ -22,8 +22,15 @@ function initExploreButton() {
     btn.style.cssText = "padding: 0 10px; font-size: 11px; opacity: 0.6;";
     btn.onclick = toggleExploreMode;
     strip.appendChild(btn);
-}
 
+    // 🔥 Single delegated listener — survives innerHTML wipes
+    boardEl.addEventListener("click", (e) => {
+        if (!exploreMode) return;
+        const sqEl = e.target.closest(".square");
+        if (!sqEl) return;
+        onExploreSquareClick(sqEl);
+    });
+}
 // ─── Enter / Exit ─────────────────────────────────────────────
 function toggleExploreMode() {
     if (exploreMode) exitExploreMode();
@@ -103,38 +110,26 @@ function hideExploreBanner() {
 // ─── Render explore position with clickable squares ───────────
 function renderExplorePosition() {
     if (!exploreChess) return;
-    const fen = exploreChess.fen();
-
-    // Highlight last move if any
     const hist = exploreChess.history({ verbose: true });
     const last = hist[hist.length - 1];
     const hlSqs = last ? [last.from, last.to] : [];
 
-    // Render board normally first
-    renderPosition(fen, hlSqs, []);
-
-    // Attach click handlers to every square
-    boardEl.querySelectorAll(".square").forEach(sqEl => {
-        sqEl.style.cursor = "pointer";
-        sqEl.addEventListener("click", onExploreSquareClick);
-    });
-
-    // Re-highlight selected square + legal move dots
-    refreshExploreHighlights();
+    renderPosition(exploreChess.fen(), hlSqs, []);
+    refreshExploreHighlights(); // dots + selected sq redrawn on top
 }
 
+
 // ─── Click handler ────────────────────────────────────────────
-function onExploreSquareClick(e) {
+function onExploreSquareClick(sqEl) {
     if (!exploreMode || !exploreChess) return;
-    const sq = e.currentTarget.dataset.sq;
+    const sq = sqEl.dataset.sq;
     if (!sq) return;
 
-    // If a square is already selected — try to move there
     if (selectedSq) {
-        const moved = tryExploreMove(selectedSq, sq);
-        if (moved) return;
-
-        // Clicked same square → deselect
+        if (exploreLegalMoves.includes(sq)) {
+            tryExploreMove(selectedSq, sq);
+            return;
+        }
         if (sq === selectedSq) {
             selectedSq = null;
             exploreLegalMoves = [];
@@ -143,19 +138,18 @@ function onExploreSquareClick(e) {
         }
     }
 
-    // Select a new piece
     const piece = exploreChess.get(sq);
-    if (!piece) { selectedSq = null; exploreLegalMoves = []; refreshExploreHighlights(); return; }
-
-    // Only allow moving the side to move
-    const turn = exploreChess.turn(); // 'w' or 'b'
-    if (piece.color !== turn) { selectedSq = null; exploreLegalMoves = []; refreshExploreHighlights(); return; }
+    if (!piece || piece.color !== exploreChess.turn()) {
+        selectedSq = null;
+        exploreLegalMoves = [];
+        refreshExploreHighlights();
+        return;
+    }
 
     selectedSq = sq;
     exploreLegalMoves = exploreChess.moves({ square: sq, verbose: true }).map(m => m.to);
     refreshExploreHighlights();
 }
-
 // ─── Try making a move ────────────────────────────────────────
 function tryExploreMove(from, to) {
     // Handle promotion — always promote to queen for simplicity
@@ -229,6 +223,7 @@ let exploreLiveToken = 0;
 function startLiveEval(fen, whiteTurn) {
     if (!stockfish || !sfReady) return;
     const myToken = ++exploreLiveToken;
+    const sideToMove = fen.split(" ")[1]; // 'w' or 'b'
 
     stockfish.postMessage("stop");
     stockfish.postMessage("position fen " + fen);
@@ -245,16 +240,20 @@ function startLiveEval(fen, whiteTurn) {
         }
         if (!msg.startsWith("info") || !msg.includes("score")) return;
 
-        const d  = parseInt((msg.match(/\bdepth (\d+)/)     || [])[1]);
-        const cp = (msg.match(/score cp (-?\d+)/)            || [])[1];
-        const mt = (msg.match(/score mate (-?\d+)/)          || [])[1];
+        const d  = parseInt((msg.match(/\bdepth (\d+)/)  || [])[1]);
+        const cp = (msg.match(/score cp (-?\d+)/)         || [])[1];
+        const mt = (msg.match(/score mate (-?\d+)/)       || [])[1];
         if (isNaN(d)) return;
 
-        updateEvalBar(
-            cp !== undefined ? +cp   : null,
-            mt !== undefined ? +mt   : null,
-            whiteTurn
-        );
+        // 🔥 Flip to White POV — Stockfish reports side-to-move POV
+        let liveCp   = cp !== undefined ? +cp : null;
+        let liveMate = mt !== undefined ? +mt : null;
+        if (sideToMove === "b") {
+            if (liveCp   !== null) liveCp   = -liveCp;
+            if (liveMate !== null) liveMate = -liveMate;
+        }
+
+        updateEvalBar(liveCp, liveMate, true); // always White POV now, so pass true
 
         const el = document.getElementById("evalDepth");
         if (el) el.textContent = `Depth: ${d}`;
