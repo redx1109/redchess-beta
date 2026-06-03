@@ -25,8 +25,6 @@ mongoose.connect(process.env.MONGO_URI, { family: 4, serverSelectionTimeoutMS: 5
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.error('❌ MongoDB connection failed:', err.message));
 
-// FIX 2: Clear stale online=true players left over from previous server instance
-// (Railway free tier restarts frequently; disconnect handlers don't always fire on crash)
 mongoose.connection.once('open', async () => {
   try {
     const cleared = await Player.updateMany({ online: true }, { online: false, socketId: null });
@@ -49,19 +47,43 @@ const roomSchema = new mongoose.Schema({
   white:     String,
   black:     String,
   moves:     { type: Array, default: [] },
+  // Store TC so rejoining players get it back
+  tc:        { type: Object, default: null },
   createdAt: { type: Date, default: Date.now, expires: 3600 }
 });
 const Room = mongoose.model('Room', roomSchema);
 
-// ─── Matchmaking queue (in-memory) ───────────────────────────────────────────
-// NOTE: This resets on server restart. Free-tier Railway restarts frequently.
-// Players waiting in queue when the server restarts will be silently dropped.
-const matchmakingQueue = [];
+// ─── TC presets (single source of truth on the server) ───────────────────────
+const TC_PRESETS = {
+  bullet1:  { minutes: 1,  increment: 0 },
+  bullet2:  { minutes: 2,  increment: 1 },
+  blitz3:   { minutes: 3,  increment: 0 },
+  blitz3i2: { minutes: 3,  increment: 2 },
+  blitz5:   { minutes: 5,  increment: 0 },
+  rapid10:  { minutes: 10, increment: 0 },
+  rapid15:  { minutes: 15, increment: 10 },
+  rapid30:  { minutes: 30, increment: 0 },
+};
+
+// ─── Matchmaking queues bucketed by TC key ────────────────────────────────────
+// matchmakingQueues['blitz3'] = [{ username, socketId }, ...]
+// matchmakingQueues['none']   = [...]   ← for no time control
+const matchmakingQueues = {};
+
+function getQueue(tcKey) {
+  const key = tcKey || 'none';
+  if (!matchmakingQueues[key]) matchmakingQueues[key] = [];
+  return matchmakingQueues[key];
+}
+
+function removeFromAllQueues(username) {
+  for (const key of Object.keys(matchmakingQueues)) {
+    const idx = matchmakingQueues[key].findIndex(p => p.username === username);
+    if (idx !== -1) matchmakingQueues[key].splice(idx, 1);
+  }
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-// Look up a live socket by username via the active socket registry
-// instead of the stale socketId stored in MongoDB.
 function getLiveSocket(username) {
   for (const [, sock] of io.sockets.sockets) {
     if (sock.data.username === username) return sock;
@@ -69,20 +91,20 @@ function getLiveSocket(username) {
   return null;
 }
 
-async function startGame(roomId, white, black) {
-  await Room.create({ roomId, white, black });
+async function startGame(roomId, white, black, tc) {
+  await Room.create({ roomId, white, black, tc: tc || null });
 
   const whiteSocket = getLiveSocket(white);
   const blackSocket = getLiveSocket(black);
   if (whiteSocket) whiteSocket.join(roomId);
   if (blackSocket) blackSocket.join(roomId);
 
-  io.to(roomId).emit('game:start', { roomId, white, black });
-  console.log(`🎮 Game started: ${white} (w) vs ${black} (b) [${roomId}]`);
+  // Send TC data to both players so their timecontrol.js can start
+  io.to(roomId).emit('game:start', { roomId, white, black, tc: tc || null });
+  console.log(`🎮 Game started: ${white} (w) vs ${black} (b) [${roomId}] TC: ${tc ? tc.key : 'none'}`);
 }
 
 // ─── REST API ─────────────────────────────────────────────────────────────────
-
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
 
 app.get('/api/username/check', async (req, res) => {
@@ -120,21 +142,16 @@ app.post('/api/username/register', async (req, res) => {
   }
 });
 
-// FIX 3: Use live socket registry for accurate online status instead of stale DB field
 app.get('/api/players/search', async (req, res) => {
   try {
     const q = (req.query.q || '').trim();
     if (q.length < 2) return res.json({ players: [] });
-
     const players = await Player.find({ username: { $regex: new RegExp(q, 'i') } })
       .limit(10).select('username -_id');
-
-    // Check live socket registry for real-time online status
     const result = players.map(p => ({
       username: p.username,
       online: !!getLiveSocket(p.username)
     }));
-
     res.json({ players: result });
   } catch (err) {
     console.error('[/api/players/search]', err.message);
@@ -142,8 +159,6 @@ app.get('/api/players/search', async (req, res) => {
   }
 });
 
-// FIX 1: Use live socket registry — 100% accurate, no DB staleness
-// Previously queried DB for online:true which was unreliable after server restarts
 app.get('/api/players/online', async (req, res) => {
   try {
     const onlinePlayers = [];
@@ -185,11 +200,13 @@ io.on('connection', (socket) => {
         return;
       }
       socket.join(roomId);
+      // Send TC back to rejoining player so their clock resumes correctly
       socket.emit('game:state', {
-            moves: room.moves,
-            white: room.white,
-            black: room.black
-        });
+        moves: room.moves,
+        white: room.white,
+        black: room.black,
+        tc:    room.tc || null
+      });
       console.log(`🔄 Rejoined: ${username} → ${roomId}`);
     } catch (err) {
       console.error('[game:rejoin]', err.message);
@@ -200,7 +217,6 @@ io.on('connection', (socket) => {
     try {
       const from = socket.data.username;
       if (!from || !to || from === to) return;
-      // FIX 3: check live socket instead of stale DB online field
       const targetSocket = getLiveSocket(to);
       if (!targetSocket)
         return socket.emit('match:error', { message: `${to} is offline or doesn't exist` });
@@ -218,7 +234,8 @@ io.on('connection', (socket) => {
       const roomId = [from, to].sort().join('_') + '_' + Date.now();
       const white  = Math.random() < 0.5 ? from : to;
       const black  = white === from ? to : from;
-      await startGame(roomId, white, black);
+      // Friend matches start with no TC (can extend later)
+      await startGame(roomId, white, black, null);
     } catch (err) {
       console.error('[match:accept]', err.message);
     }
@@ -229,25 +246,30 @@ io.on('connection', (socket) => {
     io.to(from).emit('match:declined', { by: to });
   });
 
-  socket.on('queue:join', async () => {
+  // ─── Matchmaking: now accepts a tcKey ──────────────────────────────────────
+  socket.on('queue:join', async ({ tc } = {}) => {
     try {
       const username = socket.data.username;
       if (!username) return;
 
-      // Remove if already queued (dedup)
-      const idx = matchmakingQueue.findIndex(p => p.username === username);
-      if (idx !== -1) matchmakingQueue.splice(idx, 1);
+      // Remove from any existing queue slot first (handles re-queue)
+      removeFromAllQueues(username);
 
-      if (matchmakingQueue.length > 0) {
-        const opponent = matchmakingQueue.shift();
+      // Validate TC key — fall back to 'none' if unknown
+      const tcKey    = (tc && TC_PRESETS[tc.key]) ? tc.key : 'none';
+      const tcData   = tcKey !== 'none' ? { key: tcKey, ...TC_PRESETS[tcKey] } : null;
+      const queue    = getQueue(tcKey);
+
+      if (queue.length > 0) {
+        const opponent = queue.shift();
         const roomId   = [username, opponent.username].sort().join('_') + '_' + Date.now();
         const white    = Math.random() < 0.5 ? username : opponent.username;
         const black    = white === username ? opponent.username : username;
-        await startGame(roomId, white, black);
+        await startGame(roomId, white, black, tcData);
       } else {
-        matchmakingQueue.push({ username, socketId: socket.id });
+        queue.push({ username, socketId: socket.id, tcKey });
         socket.emit('queue:waiting');
-        console.log(`⏳ Queued: ${username}`);
+        console.log(`⏳ Queued: ${username} [TC: ${tcKey}]`);
       }
     } catch (err) {
       console.error('[queue:join]', err.message);
@@ -255,8 +277,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('queue:leave', () => {
-    const idx = matchmakingQueue.findIndex(p => p.username === socket.data.username);
-    if (idx !== -1) matchmakingQueue.splice(idx, 1);
+    removeFromAllQueues(socket.data.username);
     socket.emit('queue:left');
   });
 
@@ -275,6 +296,13 @@ io.on('connection', (socket) => {
     }
   });
 
+  // ─── Clock relay: one player moved, relay times to their opponent ──────────
+  // This keeps both clocks in sync without the server needing to run its own timer.
+  socket.on('game:clock_move', ({ roomId, times }) => {
+    if (!roomId || !times) return;
+    socket.to(roomId).emit('game:clock_switch', { times });
+  });
+
   socket.on('game:resign', async ({ roomId }) => {
     try {
       const username = socket.data.username;
@@ -287,7 +315,7 @@ io.on('connection', (socket) => {
 
   socket.on('game:drawOffer',   ({ roomId }) => socket.to(roomId).emit('game:drawOffer'));
 
-  socket.on('game:drawAccept',  async ({ roomId }) => {
+  socket.on('game:drawAccept', async ({ roomId }) => {
     try {
       io.to(roomId).emit('game:over', { reason: 'draw' });
       await Room.deleteOne({ roomId });
@@ -303,37 +331,34 @@ io.on('connection', (socket) => {
       const username = socket.data.username;
       if (username) {
         await Player.findOneAndUpdate({ username }, { socketId: null, online: false });
-        const idx = matchmakingQueue.findIndex(p => p.username === username);
-        if (idx !== -1) matchmakingQueue.splice(idx, 1);
+        removeFromAllQueues(username);
         console.log(`👋 Offline: ${username}`);
 
-        // ← NEW: tell opponent their game ended if a room exists
         const activeRoom = await Room.findOne({
-  $or: [{ white: username }, { black: username }]
-});
-if (activeRoom) {
-  console.log(`⏳ Grace period started for room ${activeRoom.roomId} — ${username} disconnected`);
-  setTimeout(async () => {
-    try {
-      const whiteOnline = !!getLiveSocket(activeRoom.white);
-      const blackOnline = !!getLiveSocket(activeRoom.black);
-      if (whiteOnline && blackOnline) {
-        // both back — do nothing
-        console.log(`✅ Both players rejoined ${activeRoom.roomId}`);
-      } else if (!whiteOnline && !blackOnline) {
-        await Room.deleteOne({ roomId: activeRoom.roomId });
-        console.log(`🏳️ Room ${activeRoom.roomId} closed — both players gone`);
-      } else {
-        const gone = !whiteOnline ? activeRoom.white : activeRoom.black;
-        io.to(activeRoom.roomId).emit('game:opponent_left');
-        await Room.deleteOne({ roomId: activeRoom.roomId });
-        console.log(`🏳️ Room ${activeRoom.roomId} closed — ${gone} disconnected`);
-      }
-    } catch (err) {
-      console.error('[disconnect grace]', err.message);
-    }
-  }, 8000);
-}
+          $or: [{ white: username }, { black: username }]
+        });
+        if (activeRoom) {
+          console.log(`⏳ Grace period started for room ${activeRoom.roomId} — ${username} disconnected`);
+          setTimeout(async () => {
+            try {
+              const whiteOnline = !!getLiveSocket(activeRoom.white);
+              const blackOnline = !!getLiveSocket(activeRoom.black);
+              if (whiteOnline && blackOnline) {
+                console.log(`✅ Both players rejoined ${activeRoom.roomId}`);
+              } else if (!whiteOnline && !blackOnline) {
+                await Room.deleteOne({ roomId: activeRoom.roomId });
+                console.log(`🏳️ Room ${activeRoom.roomId} closed — both players gone`);
+              } else {
+                const gone = !whiteOnline ? activeRoom.white : activeRoom.black;
+                io.to(activeRoom.roomId).emit('game:opponent_left');
+                await Room.deleteOne({ roomId: activeRoom.roomId });
+                console.log(`🏳️ Room ${activeRoom.roomId} closed — ${gone} disconnected`);
+              }
+            } catch (err) {
+              console.error('[disconnect grace]', err.message);
+            }
+          }, 8000);
+        }
       }
     } catch (err) {
       console.error('[disconnect]', err.message);
