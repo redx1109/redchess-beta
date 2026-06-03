@@ -14,7 +14,12 @@
      crossorigin="anonymous"></script>
     <style>
         /* ── UNIQUE to bots page — everything else lives in your shared CSS ── */
-        
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         .stage {
             position: relative;
             z-index: 1;
@@ -32,6 +37,8 @@
             align-items: center;
             gap: 14px;
             transition: opacity 0.22s, transform 0.22s;
+            justify-content: center;
+            width: 100%;
         }
         .mode-row.hidden {
             opacity: 0;
@@ -306,8 +313,8 @@
 .tc-none-btn:hover  { border-color: var(--border-hover); color: var(--text); }
 .tc-none-btn.active { border-color: var(--gold-dim); color: var(--gold); background: rgba(201,168,76,0.07); }
         @media (max-width: 600px) {
-            .stage { padding: 72px 0 48px; gap: 1.4rem; }
-            .play-bots-btn { width: 100%; padding: 20px 24px; font-size: 12px; text-align: center; }
+            .stage { padding: 40px 0 32px; gap: 1rem; }
+            .play-bots-btn { width: 80%; padding: 14px 20px; font-size: 10px; text-align: center; }
             .bot-card { padding: 13px 14px; gap: 0.9rem; }
             .bot-icon { font-size: 26px; width: 30px; }
             .bot-name { font-size: 12px; }
