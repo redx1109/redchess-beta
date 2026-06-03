@@ -1,6 +1,7 @@
 /* ══════════════════════════════════════════════════════════════
    RED CHESS — BOARD  (rendering, move list, navigation)
    ══════════════════════════════════════════════════════════════ */
+let liveEvalSearch = 0;   
 let boardFlipped = false;
 const boardEl = document.getElementById("board");
 
@@ -307,6 +308,38 @@ function goToMove(idx) {
     // Eval bar, move list, and detail panel update right away too
     const whiteTurn = idx === 0 ? true : pos.color === "b";
     updateEvalBar(data.cp ?? null, data.mate ?? null, whiteTurn);
+
+    // 🔥 Live depth-increasing eval on current position
+const myToken = ++liveEvalSearch;
+if (stockfish && sfReady) {
+    stockfish.postMessage("stop");
+    stockfish.postMessage("position fen " + pos.fen);
+    stockfish.postMessage("go depth 20");
+
+    const handler = (e) => {
+        if (myToken !== liveEvalSearch) { stockfish.removeEventListener("message", handler); return; }
+        const msg = e.data;
+        if (typeof msg !== "string") return;
+        if (msg.startsWith("bestmove")) { stockfish.removeEventListener("message", handler); return; }
+        if (!msg.startsWith("info") || !msg.includes("score")) return;
+
+        const d  = parseInt((msg.match(/\bdepth (\d+)/)      || [])[1]);
+        const cp = (msg.match(/score cp (-?\d+)/)             || [])[1];
+        const mt = (msg.match(/score mate (-?\d+)/)           || [])[1];
+        if (isNaN(d)) return;
+
+        const liveCp   = cp !== undefined ? +cp   : null;
+        const liveMate = mt !== undefined ? +mt   : null;
+
+        updateEvalBar(liveCp, liveMate, whiteTurn);
+
+        const el = document.getElementById("evalDepth");
+        if (el) el.textContent = `Depth: ${d}`;
+    };
+
+    stockfish.addEventListener("message", handler);
+}
+   
     updateActiveMoveCell(idx);
     showMoveDetail(idx, positions, analysisData);
 
