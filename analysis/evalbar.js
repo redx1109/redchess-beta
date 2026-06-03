@@ -1,3 +1,55 @@
+// ─── Stockfish Live Analysis ────────────────────────────────────────────────
+
+const stockfish = new Worker("stockfish.js"); // adjust path if needed
+let isWhiteTurn = true;
+
+// Tell Stockfish we're in UCI mode once
+stockfish.postMessage("uci");
+stockfish.postMessage("isready");
+
+// Listen to everything Stockfish says
+stockfish.onmessage = function (e) {
+    const msg = e.data;
+
+    // Only care about "info depth" lines (the live analysis updates)
+    if (!msg.startsWith("info") || !msg.includes("depth")) return;
+
+    // Skip lines without a score (e.g. pure seldepth lines)
+    const hasScore = msg.includes("score cp") || msg.includes("score mate");
+    if (!hasScore) return;
+
+    // Parse depth (just for display if you want it)
+    const depthMatch = msg.match(/\bdepth (\d+)/);
+    const depth = depthMatch ? parseInt(depthMatch[1]) : null;
+
+    // Parse centipawn score
+    const cpMatch = msg.match(/score cp (-?\d+)/);
+    const cp = cpMatch ? parseInt(cpMatch[1]) : null;
+
+    // Parse mate score
+    const mateMatch = msg.match(/score mate (-?\d+)/);
+    const mate = mateMatch ? parseInt(mateMatch[1]) : null;
+
+    // 🔥 Feed directly into YOUR existing function
+    updateEvalBar(cp, mate, isWhiteTurn);
+
+    // Optional: show depth somewhere in your UI
+    if (depth) {
+        const depthEl = document.getElementById("evalDepth");
+        if (depthEl) depthEl.textContent = `Depth: ${depth}`;
+    }
+};
+
+// ─── Call this after every move ─────────────────────────────────────────────
+function analyzePosition(fen, whiteTurn) {
+    isWhiteTurn = whiteTurn;
+
+    stockfish.postMessage("stop");              // stop previous search
+    stockfish.postMessage("ucinewgame");        // clear hash tables
+    stockfish.postMessage(`position fen ${fen}`);
+    stockfish.postMessage("go depth infinite");       // depth 25 is plenty, raise if you want
+}
+
 // ─── Eval Bar ──────────────────────────────────────────────────────────────────
 // Matches chess.com eval bar behavior as closely as possible.
 
@@ -9,6 +61,7 @@
  * Formula reverse-engineered from chess.com:
  *   k = 0.00368   →  50 cp ≈ 53.7 %, 100 cp ≈ 57.3 %, 300 cp ≈ 72 %
  */
+
 function evalToPercent(cp) {
     if (cp === null || cp === undefined) return 50;
 
