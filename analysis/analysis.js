@@ -206,7 +206,9 @@ async function runAnalysis() {
     for (let i = 0; i < total; i++) {
         if (!isAnalysing) break;
 
-        const result = await evalPosition(positions[i].fen);
+        const result = await evalPosition(positions[i].fen, (cp, mate, isWhite) => {
+          updateEvalBar(cp, mate, isWhite);
+        });
         if (!result) continue;
 
         // Store engine output
