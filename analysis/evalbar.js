@@ -1,6 +1,4 @@
 // ─── Stockfish Live Analysis ────────────────────────────────────────────────
-
-const stockfish = new Worker("stockfish.js"); // adjust path if needed
 let isWhiteTurn = true;
 
 // Tell Stockfish we're in UCI mode once
