@@ -14,7 +14,7 @@
      crossorigin="anonymous"></script>
     <style>
         /* ── UNIQUE to bots page — everything else lives in your shared CSS ── */
-
+        
         .stage {
             position: relative;
             z-index: 1;
@@ -231,7 +231,80 @@
             transition: background 0.2s, box-shadow 0.2s;
         }
         .start-btn:hover { background: #dcb95a; box-shadow: 0 0 24px rgba(201,168,76,0.35); }
+        /* ── Fix 1: Lighter weight on mode buttons ── */
+.play-bots-btn {
+    font-weight: 400; /* was 600 — too heavy for your theme */
+}
 
+/* ── Fix 2: Time control buttons ── */
+.tc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.tc-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 12px 6px 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+.tc-btn:hover {
+    border-color: var(--border-hover);
+    background: var(--surface2);
+}
+.tc-btn.active {
+    border-color: var(--gold-dim);
+    background: rgba(201,168,76,0.07);
+    box-shadow: 0 0 16px rgba(201,168,76,0.1);
+}
+
+.tc-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+.tc-label {
+    font-family: var(--font-d);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--text);
+    font-weight: 400;
+}
+.tc-sub {
+    font-family: var(--font-b);
+    font-size: 10px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+.tc-btn.active .tc-label { color: var(--gold); }
+.tc-btn.active .tc-sub   { color: var(--gold-dim); }
+
+/* ── "No Time Control" spans full width ── */
+.tc-none-btn {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    cursor: pointer;
+    font-family: var(--font-d);
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+.tc-none-btn:hover  { border-color: var(--border-hover); color: var(--text); }
+.tc-none-btn.active { border-color: var(--gold-dim); color: var(--gold); background: rgba(201,168,76,0.07); }
         @media (max-width: 600px) {
             .stage { padding: 72px 0 48px; gap: 1.4rem; }
             .play-bots-btn { width: 100%; padding: 20px 24px; font-size: 12px; text-align: center; }
