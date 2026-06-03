@@ -206,8 +206,10 @@ async function runAnalysis() {
     for (let i = 0; i < total; i++) {
         if (!isAnalysing) break;
 
-        const result = await evalPosition(positions[i].fen, (cp, mate, isWhite) => {
+        const result = await evalPosition(positions[i].fen, (cp, mate, isWhite, depth) => {
           updateEvalBar(cp, mate, isWhite);
+           const el = document.getElementById("evalDepth");
+           if (el) el.textContent = `Depth: ${depth}`;
         });
         if (!result) continue;
 
