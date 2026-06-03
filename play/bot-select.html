@@ -74,7 +74,6 @@
             padding: 80px 0 60px;
         }
 
-        /* ── Phase 1: mode buttons ── */
         .mode-row {
             display: flex;
             flex-direction: column;
@@ -118,7 +117,6 @@
         .play-bots-btn:hover { border-color: var(--gold); box-shadow: 0 0 28px rgba(201,168,76,0.2), inset 0 0 20px rgba(201,168,76,0.06); }
         .play-bots-btn:hover::before { opacity: 1; }
 
-        /* ── Phase 2: bot list ── */
         .section-title {
             font-family: var(--font-d);
             font-size: 10px;
@@ -133,7 +131,6 @@
         }
         .section-title.visible { opacity: 1; transform: translateY(0); }
 
-        /* sub-header label between Stockfish and legends */
         .list-label {
             font-family: var(--font-d);
             font-size: 9px;
@@ -186,7 +183,6 @@
         .bot-card.selected .pip.lit,
         .bot-card:hover    .pip.lit { background: var(--gold); }
 
-        /* ── Phase 3: settings panel ── */
         .settings-panel {
             width: 100%;
             display: flex;
@@ -203,13 +199,11 @@
         }
         .settings-panel.visible { opacity: 1; transform: translateY(0); pointer-events: all; }
 
-        /* bot identity row */
         .panel-bot-header { display: flex; align-items: center; gap: 14px; }
         .panel-bot-avatar { font-size: 34px; line-height: 1; flex-shrink: 0; }
         .panel-bot-name  { font-family: var(--font-d); font-size: 15px; letter-spacing: 0.1em; color: var(--text); margin-bottom: 3px; }
         .panel-bot-title { font-family: var(--font-b); font-size: 13px; font-style: italic; color: var(--text-muted); }
 
-        /* quote */
         .panel-quote {
             font-family: var(--font-b);
             font-size: 14px;
@@ -220,7 +214,6 @@
             border-left: 2px solid var(--gold-dim);
         }
 
-        /* tags */
         .panel-tags { display: flex; flex-wrap: wrap; gap: 7px; }
         .tag {
             font-family: var(--font-d);
@@ -233,12 +226,10 @@
             padding: 4px 9px;
         }
 
-        /* weakness tip */
         .panel-tip { display: flex; align-items: flex-start; gap: 10px; }
         .panel-tip-label { font-family: var(--font-d); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); white-space: nowrap; padding-top: 2px; }
         .panel-tip-text  { font-family: var(--font-b); font-size: 13px; color: var(--text-muted); line-height: 1.55; }
 
-        /* ELO slider (Stockfish only) */
         .elo-block { display: flex; flex-direction: column; gap: 12px; }
         .setting-header { display: flex; align-items: baseline; justify-content: space-between; }
         .setting-label  { font-family: var(--font-d); font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-muted); }
@@ -264,7 +255,6 @@
 
         .divider { width: 100%; height: 1px; background: var(--border); opacity: 0.5; }
 
-        /* color picker */
         .color-picker { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
         .color-opt {
             display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -282,7 +272,56 @@
         .color-label { font-family: var(--font-d); font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--text-muted); }
         .color-opt.active .color-label { color: var(--gold); }
 
-        /* start button */
+        /* ── TIME CONTROL PICKER ── */
+        .tc-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .tc-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 6px 10px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+        }
+        .tc-btn:hover { border-color: var(--border-hover); background: rgba(255,255,255,0.02); }
+        .tc-btn.active {
+            border-color: var(--gold-dim);
+            background: rgba(201,168,76,0.07);
+            box-shadow: 0 0 16px rgba(201,168,76,0.1);
+        }
+        .tc-btn.active .tc-label { color: var(--gold); }
+        .tc-btn.active .tc-sub   { color: var(--gold-dim); }
+        .tc-icon  { font-size: 16px; line-height: 1; }
+        .tc-label { font-family: var(--font-d); font-size: 11px; letter-spacing: 0.1em; color: var(--text-muted); }
+        .tc-sub   { font-family: var(--font-b); font-size: 11px; font-style: italic; color: var(--text-muted); opacity: 0.6; }
+        .tc-none-btn {
+            grid-column: span 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            cursor: pointer;
+            font-family: var(--font-d);
+            font-size: 9px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .tc-none-btn:hover { border-color: var(--border-hover); color: var(--text); }
+        .tc-none-btn.active { border-color: var(--gold-dim); color: var(--gold); background: rgba(201,168,76,0.05); }
+
         .start-btn {
             font-family: var(--font-d);
             font-size: 11px; font-weight: 600;
@@ -295,7 +334,6 @@
         }
         .start-btn:hover { background: #dcb95a; box-shadow: 0 0 24px rgba(201,168,76,0.35); }
 
-        /* ── Mobile ── */
         @media (max-width: 600px) {
             .stage { padding: 72px 0 48px; gap: 1.4rem; }
             .play-bots-btn { width: 100%; padding: 20px 24px; font-size: 12px; text-align: center; }
@@ -313,6 +351,9 @@
             .elo-slider::-webkit-slider-thumb { width: 24px; height: 24px; }
             .color-opt { padding: 16px 6px 14px; }
             .start-btn { padding: 18px 0; font-size: 12px; }
+            .tc-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+            .tc-btn { padding: 10px 4px 8px; }
+            .tc-label { font-size: 10px; }
         }
     </style>
 </head>
@@ -333,7 +374,6 @@
         <p class="section-title" id="sectionTitle">Choose an opponent</p>
 
         <div class="bot-list" id="botList">
-            <!-- Stockfish card (static) -->
             <div class="bot-card" id="card-stockfish" onclick="selectStockfish()">
                 <div class="bot-icon">♞</div>
                 <div class="bot-meta">
@@ -343,18 +383,15 @@
                     </div>
                     <div class="bot-desc">Classic engine · adjustable strength</div>
                 </div>
-                <!-- no pips for Stockfish — it's a slider -->
             </div>
         </div>
 
-        <!-- Legend bots label + list injected here by JS -->
         <p class="list-label" id="legendLabel">— Chess Legends —</p>
         <div class="bot-list" id="legendList"></div>
 
         <!-- Phase 3: settings panel -->
         <div class="settings-panel" id="settingsPanel">
 
-            <!-- Bot identity (legends only) -->
             <div id="panelBotHeader" class="panel-bot-header" style="display:none">
                 <span class="panel-bot-avatar" id="panelAvatar"></span>
                 <div>
@@ -363,19 +400,14 @@
                 </div>
             </div>
 
-            <!-- Quote (legends only) -->
             <div class="panel-quote" id="panelQuote" style="display:none"></div>
+            <div class="panel-tags" id="panelTags"  style="display:none"></div>
 
-            <!-- Tags (legends only) -->
-            <div class="panel-tags" id="panelTags" style="display:none"></div>
-
-            <!-- Weakness tip (legends only) -->
             <div class="panel-tip" id="panelTip" style="display:none">
                 <span class="panel-tip-label">Tip</span>
                 <span class="panel-tip-text" id="panelTipText"></span>
             </div>
 
-            <!-- ELO slider (Stockfish only) -->
             <div class="elo-block" id="eloBlock" style="display:none">
                 <div class="setting-header">
                     <span class="setting-label">Engine Strength</span>
@@ -394,7 +426,7 @@
 
             <div class="divider"></div>
 
-            <!-- Color picker (always shown) -->
+            <!-- Color picker -->
             <div>
                 <div class="setting-label" style="margin-bottom:12px">Play as</div>
                 <div class="color-picker">
@@ -413,6 +445,82 @@
                 </div>
             </div>
 
+            <div class="divider"></div>
+
+            <!-- ── TIME CONTROL PICKER ── -->
+            <div>
+                <div class="setting-label" style="margin-bottom:12px">Time Control</div>
+                <div class="tc-grid">
+                    <button class="tc-btn" data-tc="bullet1" onclick="pickTC('bullet1')">
+                        <span class="tc-icon">⚡</span>
+                        <span class="tc-label">1+0</span>
+                        <span class="tc-sub">Bullet</span>
+                    </button>
+                    <button class="tc-btn" data-tc="bullet2" onclick="pickTC('bullet2')">
+                        <span class="tc-icon">⚡</span>
+                        <span class="tc-label">2+1</span>
+                        <span class="tc-sub">Bullet</span>
+                    </button>
+                    <button class="tc-btn" data-tc="blitz3" onclick="pickTC('blitz3')">
+                        <span class="tc-icon">🔥</span>
+                        <span class="tc-label">3+0</span>
+                        <span class="tc-sub">Blitz</span>
+                    </button>
+                    <button class="tc-btn" data-tc="blitz3i2" onclick="pickTC('blitz3i2')">
+                        <span class="tc-icon">🔥</span>
+                        <span class="tc-label">3+2</span>
+                        <span class="tc-sub">Blitz</span>
+                    </button>
+                    <button class="tc-btn" data-tc="blitz5" onclick="pickTC('blitz5')">
+                        <span class="tc-icon">🔥</span>
+                        <span class="tc-label">5+0</span>
+                        <span class="tc-sub">Blitz</span>
+                    </button>
+                    <button class="tc-btn" data-tc="rapid10" onclick="pickTC('rapid10')">
+                        <span class="tc-icon">♟</span>
+                        <span class="tc-label">10+0</span>
+                        <span class="tc-sub">Rapid</span>
+                    </button>
+                    <button class="tc-btn" data-tc="rapid15" onclick="pickTC('rapid15')">
+                        <span class="tc-icon">♟</span>
+                        <span class="tc-label">15+10</span>
+                        <span class="tc-sub">Rapid</span>
+                    </button>
+                    <button class="tc-btn" data-tc="rapid30" onclick="pickTC('rapid30')">
+                        <span class="tc-icon">♟</span>
+                        <span class="tc-label">30+0</span>
+                        <span class="tc-sub">Rapid</span>
+                    </button>
+                    <button class="tc-btn" data-tc="custom" onclick="pickTC('custom')" id="tcCustomBtn">
+                        <span class="tc-icon">🛠</span>
+                        <span class="tc-label" id="tcCustomLabel">Custom</span>
+                        <span class="tc-sub">set below</span>
+                    </button>
+                    <button class="tc-none-btn" data-tc="none" onclick="pickTC('none')">
+                        ∞ &nbsp; No Time Control
+                    </button>
+                </div>
+
+                <!-- Custom inputs (hidden unless custom selected) -->
+                <div id="tcCustomInputs" style="display:none; margin-top:12px; display:none;">
+                    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                        <div style="display:flex;flex-direction:column;gap:4px;">
+                            <span class="setting-label" style="font-size:8px;">Minutes</span>
+                            <input type="number" id="tcCustomMin" min="1" max="180" value="5"
+                                oninput="updateCustomLabel()"
+                                style="width:64px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:2px;color:var(--text);font-family:var(--font-d);font-size:14px;padding:8px;text-align:center;outline:none;">
+                        </div>
+                        <span style="color:var(--text-muted);font-size:18px;padding-top:16px;">+</span>
+                        <div style="display:flex;flex-direction:column;gap:4px;">
+                            <span class="setting-label" style="font-size:8px;">Increment (sec)</span>
+                            <input type="number" id="tcCustomInc" min="0" max="60" value="0"
+                                oninput="updateCustomLabel()"
+                                style="width:64px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:2px;color:var(--text);font-family:var(--font-d);font-size:14px;padding:8px;text-align:center;outline:none;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <button class="start-btn" onclick="startGame()">Start Game →</button>
         </div>
 
@@ -420,9 +528,37 @@
 
     <script src="bots.js"></script>
     <script>
-        let selectedBotId = null;   // null = Stockfish
+        let selectedBotId = null;
         let chosenColor   = 'w';
         let chosenElo     = 1500;
+        let chosenTC      = 'none'; // default: no time control
+
+        /* ── Time Control ── */
+        const TC_PRESETS = {
+            bullet1:  { minutes: 1,  increment: 0 },
+            bullet2:  { minutes: 2,  increment: 1 },
+            blitz3:   { minutes: 3,  increment: 0 },
+            blitz3i2: { minutes: 3,  increment: 2 },
+            blitz5:   { minutes: 5,  increment: 0 },
+            rapid10:  { minutes: 10, increment: 0 },
+            rapid15:  { minutes: 15, increment: 10 },
+            rapid30:  { minutes: 30, increment: 0 },
+        };
+
+        function pickTC(key) {
+            chosenTC = key;
+            document.querySelectorAll('.tc-btn, .tc-none-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.querySelector(`[data-tc="${key}"]`);
+            if (btn) btn.classList.add('active');
+            const customInputs = document.getElementById('tcCustomInputs');
+            customInputs.style.display = key === 'custom' ? 'flex' : 'none';
+        }
+
+        function updateCustomLabel() {
+            const m = document.getElementById('tcCustomMin').value || 5;
+            const i = document.getElementById('tcCustomInc').value || 0;
+            document.getElementById('tcCustomLabel').textContent = `${m}+${i}`;
+        }
 
         /* ── Build legend bot cards ── */
         function buildLegendList() {
@@ -455,44 +591,34 @@
             });
         }
 
-        /* ── Phase 1 → 2 ── */
         function showBots() {
             document.getElementById('modeRow').classList.add('hidden');
-
             setTimeout(() => document.getElementById('sectionTitle').classList.add('visible'), 180);
             setTimeout(() => document.getElementById('card-stockfish').classList.add('visible'), 260);
             setTimeout(() => document.getElementById('legendLabel').classList.add('visible'), 340);
-
             const cards = document.querySelectorAll('#legendList .bot-card');
             cards.forEach((c, i) => setTimeout(() => c.classList.add('visible'), 400 + i * 55));
         }
 
-        /* ── Select Stockfish ── */
         function selectStockfish() {
             selectedBotId = null;
             document.querySelectorAll('.bot-card').forEach(c => c.classList.remove('selected'));
             document.getElementById('card-stockfish').classList.add('selected');
-
-            // Show ELO slider, hide legend sections
             document.getElementById('panelBotHeader').style.display = 'none';
             document.getElementById('panelQuote').style.display     = 'none';
             document.getElementById('panelTags').style.display      = 'none';
             document.getElementById('panelTip').style.display       = 'none';
             document.getElementById('eloBlock').style.display       = 'flex';
-
             showPanel();
         }
 
-        /* ── Select legend bot ── */
         function selectBot(id) {
             const bot = getBotById(id);
             if (!bot) return;
-
             selectedBotId = id;
             document.querySelectorAll('.bot-card').forEach(c => c.classList.remove('selected'));
             document.getElementById('card-' + id).classList.add('selected');
 
-            // Populate
             document.getElementById('panelAvatar').textContent   = bot.avatar;
             document.getElementById('panelName').textContent     = `${bot.name}  ·  ${bot.fullName}`;
             document.getElementById('panelSubtitle').textContent = `${bot.title}  ·  ${bot.elo.toLocaleString()} ELO ${bot.eloNote}  ·  Difficulty ${bot.difficulty}/10`;
@@ -509,13 +635,11 @@
             const tips = bot.weaknesses;
             document.getElementById('panelTipText').textContent = tips[Math.floor(Math.random() * tips.length)];
 
-            // Show legend sections, hide ELO slider
             document.getElementById('panelBotHeader').style.display = 'flex';
             document.getElementById('panelQuote').style.display     = 'block';
             document.getElementById('panelTags').style.display      = 'flex';
             document.getElementById('panelTip').style.display       = 'flex';
             document.getElementById('eloBlock').style.display       = 'none';
-
             showPanel();
         }
 
@@ -525,10 +649,9 @@
             setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
         }
 
-        /* ── ELO slider (Stockfish) ── */
         const TIERS = [
-            [500,  'Beginner'], [800, 'Novice'], [1200, 'Intermediate'],
-            [1600, 'Advanced'], [2000, 'Expert'], [2400, 'Master'], [2800, 'Grandmaster'],
+            [500,'Beginner'],[800,'Novice'],[1200,'Intermediate'],
+            [1600,'Advanced'],[2000,'Expert'],[2400,'Master'],[2800,'Grandmaster'],
         ];
         function eloTier(v) {
             let label = TIERS[0][1];
@@ -541,24 +664,36 @@
             document.getElementById('eloTier').textContent = eloTier(chosenElo);
         }
 
-        /* ── Color picker ── */
         function pickColor(c) {
             chosenColor = c;
             ['optWhite','optRandom','optBlack'].forEach(id =>
                 document.getElementById(id).classList.remove('active'));
-            ({ w:'optWhite', r:'optRandom', b:'optBlack' });
             document.getElementById({w:'optWhite',r:'optRandom',b:'optBlack'}[c]).classList.add('active');
         }
 
-        /* ── Start game ── */
         function startGame() {
             let playerColor = chosenColor;
             if (playerColor === 'r') playerColor = Math.random() < 0.5 ? 'w' : 'b';
 
             localStorage.removeItem('chessGameState');
 
+            // ── Save time control to localStorage ──
+            if (chosenTC && chosenTC !== 'none') {
+                let tcData;
+                if (chosenTC === 'custom') {
+                    const mins = parseInt(document.getElementById('tcCustomMin').value) || 5;
+                    const inc  = parseInt(document.getElementById('tcCustomInc').value) || 0;
+                    tcData = { preset: 'custom', minutes: mins, increment: inc };
+                } else {
+                    const p = TC_PRESETS[chosenTC];
+                    tcData = { preset: chosenTC, minutes: p.minutes, increment: p.increment };
+                }
+                localStorage.setItem('chessTimeControl', JSON.stringify(tcData));
+            } else {
+                localStorage.removeItem('chessTimeControl');
+            }
+
             if (selectedBotId === null) {
-                // Stockfish path — original format game.js expects
                 localStorage.setItem('botSettings', JSON.stringify({
                     active:      true,
                     elo:         chosenElo,
@@ -566,7 +701,6 @@
                     botColor:    playerColor === 'w' ? 'b' : 'w',
                 }));
             } else {
-                // Legend bot path — uses activateBot() from bots.js
                 activateBot(selectedBotId, playerColor);
             }
 
@@ -584,26 +718,26 @@
         </button>
         <div id="aboutBox" style="display:none;background:#0e0d0b;border-top:1px solid rgba(201,168,76,0.1);padding:18px 24px 20px;max-width:560px;margin:0 auto;text-align:left;">
             <p style="font-family:'Crimson Pro',serif;font-size:14px;font-weight:300;color:rgba(232,223,200,0.55);line-height:1.75;margin:0;">
-                Red Chess lets you play against <strong style="color:rgba(232,223,200,0.75)">Stockfish</strong> at any strength, or face one of <strong style="color:rgba(232,223,200,0.75)">10 legendary chess personalities</strong> — from Philidor's pawn obsession to Carlsen's universal perfection. No account required. Runs entirely in your browser.
+                Red Chess lets you play against <strong style="color:rgba(232,223,200,0.75)">Stockfish</strong> at any strength, or face one of <strong style="color:rgba(232,223,200,0.75)">10 legendary chess personalities</strong>. No account required. Runs entirely in your browser.
             </p>
         </div>
     </div>
-<audio id="bgMusic" loop>
-  <source src="../sounds/Aftertherain.mp3" type="audio/mpeg">
-</audio>
-<script src="../music-persist.js"></script>
-    <script src="../username-popup.js"></script>
-    <script>function goOnline() {
-    const username = typeof getUsername === 'function' && getUsername();
-    if (!username) {
-        showUsernamePopup(() => {
-            window.location.href = 'playonline/playonline.html';
-        });
-    } else {
-        window.location.href = 'playonline/playonline.html';
-    }
-}</script>
-<script src="../mute-btn.js"></script>
-</body>
 
+    <audio id="bgMusic" loop>
+        <source src="../sounds/Aftertherain.mp3" type="audio/mpeg">
+    </audio>
+    <script src="../music-persist.js"></script>
+    <script src="../username-popup.js"></script>
+    <script>
+        function goOnline() {
+            const username = typeof getUsername === 'function' && getUsername();
+            if (!username) {
+                showUsernamePopup(() => { window.location.href = 'playonline/playonline.html'; });
+            } else {
+                window.location.href = 'playonline/playonline.html';
+            }
+        }
+    </script>
+    <script src="../mute-btn.js"></script>
+</body>
 </html>
