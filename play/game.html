@@ -51,7 +51,7 @@
         .clock {
             display: flex;
             align-items: center;
-            justify-content: flex-end;
+            justify-content: center;
             width: 100%;
             padding: 5px 10px;
             box-sizing: border-box;
@@ -154,6 +154,32 @@
            MOBILE layout  <= 700 px
            Desktop (game.css) is completely unchanged.
         ════════════════════════════════════════════ */
+        /* ── PC: clocks sit on the right side of board vertically ── */
+@media (min-width: 701px) {
+    .board-col {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    #clock-b {
+        order: 0;   /* top — black */
+        width: 100%;
+    }
+
+    .board-container {
+        order: 1;
+    }
+
+    .file-labels {
+        order: 2;
+    }
+
+    #clock-w {
+        order: 3;   /* bottom — white */
+        width: 100%;
+    }
+}
         @media (max-width: 700px) {
 
             body {
@@ -308,6 +334,18 @@
                 font-size: 11px !important;
                 margin-top: 0 !important;
             }
+            #clock-b,
+#clock-w {
+    width: 96vw !important;
+    text-align: center !important;
+    justify-content: center !important;
+    font-size: 1.1rem !important;
+    border-radius: 3px !important;
+    padding: 6px 0 !important;
+}
+
+#clock-b { order: 0; }   /* above board */
+#clock-w { order: 3; }   /* below board */
         }
     </style>
 </head>
