@@ -38,7 +38,7 @@ function enterExploreMode() {
     // Spin up chess.js from current position
     const pos = positions[currentIdx];
     exploreChess = new Chess(pos.fen);
-
+    explorePrevCp = analysisData[currentIdx]?.cp ?? 0;
     // Update button
     const btn = document.getElementById("exploreBtn");
     if (btn) {
