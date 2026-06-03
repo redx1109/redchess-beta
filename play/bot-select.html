@@ -560,13 +560,20 @@
         }
 
         function showBots() {
-            document.getElementById('modeRow').classList.add('hidden');
-            setTimeout(() => document.getElementById('sectionTitle').classList.add('visible'), 180);
-            setTimeout(() => document.getElementById('card-stockfish').classList.add('visible'), 260);
-            setTimeout(() => document.getElementById('legendLabel').classList.add('visible'), 340);
-            const cards = document.querySelectorAll('#legendList .bot-card');
-            cards.forEach((c, i) => setTimeout(() => c.classList.add('visible'), 400 + i * 55));
-        }
+    document.getElementById('modeRow').classList.add('hidden');
+    
+    // show the hidden elements first
+    document.getElementById('sectionTitle').style.display = 'block';
+    document.getElementById('botList').style.display = 'flex';
+    document.getElementById('legendLabel').style.display = 'block';
+    document.getElementById('legendList').style.display = 'flex';
+
+    setTimeout(() => document.getElementById('sectionTitle').classList.add('visible'), 180);
+    setTimeout(() => document.getElementById('card-stockfish').classList.add('visible'), 260);
+    setTimeout(() => document.getElementById('legendLabel').classList.add('visible'), 340);
+    const cards = document.querySelectorAll('#legendList .bot-card');
+    cards.forEach((c, i) => setTimeout(() => c.classList.add('visible'), 400 + i * 55));
+}
 
         function selectStockfish() {
             selectedBotId = null;
