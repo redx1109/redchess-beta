@@ -4,6 +4,10 @@
 // Time control is set BEFORE the game via the bot/matchmaking/friend pages
 // and saved to localStorage as 'chessTimeControl'.
 // This file reads that setting and runs the clock — NO popup shown here.
+//
+// For online games, online.js calls:
+//   RedChessClock.getTimes()         — get current {w, b} ms to send to server
+//   RedChessClock.syncFromServer(t)  — correct clock drift after opponent move
 // ──────────────────────────────────────────────────────────────────────────────
 
 (function () {
@@ -100,6 +104,7 @@
 
     function switchClock() {
         if (!_enabled) return;
+        // Add increment to the color that just finished their move
         if (_activeColor === 'w') { _timeW += _increment; _activeColor = 'b'; }
         else                      { _timeB += _increment; _activeColor = 'w'; }
         _lastTick = Date.now();
@@ -112,6 +117,26 @@
         _lastTick = Date.now();
         _interval = setInterval(_tick, 100);
         _updateDisplay();
+    }
+
+    // ─── Online sync helpers ─────────────────────────────────────────────────
+
+    // Called by online.js after opponent's move arrives (via game:clock_switch).
+    // The server relays the moving player's times right after their move,
+    // so we use them to correct any latency drift in our local countdown.
+    function syncFromServer(times) {
+        if (!_enabled) return;
+        if (typeof times.w === 'number') _timeW = times.w;
+        if (typeof times.b === 'number') _timeB = times.b;
+        // Don't touch _activeColor here — switchClock already flipped it
+        // when applyMove fired the local clock switch.
+        _updateDisplay();
+    }
+
+    // Called by online.js right before emitting game:clock_move to the server.
+    // Returns the current remaining time for both colors in milliseconds.
+    function getTimes() {
+        return { w: _timeW, b: _timeB };
     }
 
     // ─── Patch applyMove ─────────────────────────────────────────────────────
@@ -223,19 +248,7 @@
     } else {
         _buildUI();
     }
-    // Called when opponent's move arrives — server sends authoritative times
-function syncFromServer(times) {
-    if (!_enabled) return;
-    if (typeof times.w === 'number') _timeW = times.w;
-    if (typeof times.b === 'number') _timeB = times.b;
-    // switchClock is called by applyMove patch so we just update times here
-    _updateDisplay();
-}
 
-// Called before emitting move to server — send current times for relay
-function getTimes() {
-    return { w: _timeW, b: _timeB };
-}
+    window.RedChessClock = { start, switchClock, isEnabled: () => _enabled, syncFromServer, getTimes };
 
-window.RedChessClock = { start, switchClock, isEnabled: () => _enabled, syncFromServer, getTimes };
 })();
