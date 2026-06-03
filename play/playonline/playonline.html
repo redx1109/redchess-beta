@@ -254,18 +254,32 @@
         </div>
 
         <!-- ── Find Match view ── -->
-        <div class="lobby-view" id="viewFindMatch" style="display:flex">
-            <div class="lobby-title">Find Match</div>
-            <div class="lobby-subtitle">Get paired with a random opponent instantly</div>
-            <div class="lobby-cards" style="max-width:320px;">
-                <div class="lobby-card" style="align-items:center;">
-                    <div class="lobby-card-icon">⚔</div>
-                    <div class="lobby-card-title">Random Opponent</div>
-                    <p class="lobby-card-desc">Colors are assigned randomly. Game starts as soon as an opponent is found.</p>
-                    <button class="lobby-btn" id="btnStartMatch">START GAME</button>
-                </div>
-            </div>
+<div class="lobby-view" id="viewFindMatch" style="display:flex">
+    <div class="lobby-title">Find Match</div>
+    <div class="lobby-subtitle">Choose a time control, then get paired instantly</div>
+
+    <!-- TIME CONTROL PICKER -->
+    <div style="width:100%;max-width:320px;margin-bottom:1.2rem;">
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:#6b6352;margin-bottom:10px;">Time Control</div>
+        <div id="onlineTcGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+            <button class="online-tc-btn active" data-tc="blitz3"   onclick="pickOnlineTC('blitz3')">  <span class="tc-icon">🔥</span><span class="tc-label">3+0</span><span class="tc-sub">Blitz</span></button>
+            <button class="online-tc-btn"        data-tc="blitz3i2" onclick="pickOnlineTC('blitz3i2')"><span class="tc-icon">🔥</span><span class="tc-label">3+2</span><span class="tc-sub">Blitz</span></button>
+            <button class="online-tc-btn"        data-tc="blitz5"   onclick="pickOnlineTC('blitz5')">  <span class="tc-icon">🔥</span><span class="tc-label">5+0</span><span class="tc-sub">Blitz</span></button>
+            <button class="online-tc-btn"        data-tc="rapid10"  onclick="pickOnlineTC('rapid10')"> <span class="tc-icon">♟</span><span class="tc-label">10+0</span><span class="tc-sub">Rapid</span></button>
+            <button class="online-tc-btn"        data-tc="rapid15"  onclick="pickOnlineTC('rapid15')"> <span class="tc-icon">♟</span><span class="tc-label">15+10</span><span class="tc-sub">Rapid</span></button>
+            <button class="online-tc-btn"        data-tc="bullet1"  onclick="pickOnlineTC('bullet1')"> <span class="tc-icon">⚡</span><span class="tc-label">1+0</span><span class="tc-sub">Bullet</span></button>
         </div>
+    </div>
+
+    <div class="lobby-cards" style="max-width:320px;">
+        <div class="lobby-card" style="align-items:center;">
+            <div class="lobby-card-icon">⚔</div>
+            <div class="lobby-card-title">Random Opponent</div>
+            <p class="lobby-card-desc">You'll be matched with someone playing the same time control.</p>
+            <button class="lobby-btn" id="btnStartMatch">START GAME</button>
+        </div>
+    </div>
+</div>
 
         <!-- ── Find Match searching view ── -->
         <div class="lobby-view" id="viewSearching" style="display:none; flex-direction:column; align-items:center;">
