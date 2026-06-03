@@ -607,3 +607,9 @@ input[type="text"]::placeholder{color:var(--muted)}
     position: relative;
     z-index: 2;        /* above overlay */
 }
+
+
+.square.explore-selected {
+    outline: 3px solid rgba(201, 168, 76, 0.85);
+    outline-offset: -3px;
+}
