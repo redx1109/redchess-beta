@@ -47,6 +47,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
     <style>
+        /* ── Clock position hard reset ── */
+#clock-b,
+#clock-w {
+    position: static !important;
+    float: none !important;
+    right: unset !important;
+    bottom: unset !important;
+    top: unset !important;
+    left: unset !important;
+    width: 100% !important;
+    box-sizing: border-box;
+}
         /* ── Chess clocks ── */
         .clock {
             display: flex;
@@ -119,9 +131,18 @@
 
         /* Mobile analyze button — hidden on desktop only */
         @media (min-width: 701px) {
-            .analyze-btn--mobile { display: none !important; }
-        }
-
+    .board-col {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 100%;
+    }
+    #clock-b        { order: 0; }
+    .opponent-nameplate { order: 0; }
+    .board-container { order: 2; }
+    .file-labels    { order: 3; }
+    #clock-w        { order: 4; }
+}
         /* Mobile history nav — hidden on desktop */
         .mobile-nav {
             display: none;
