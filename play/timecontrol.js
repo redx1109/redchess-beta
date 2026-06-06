@@ -5,6 +5,9 @@
 // and saved to localStorage as 'chessTimeControl'.
 // This file reads that setting and runs the clock — NO popup shown here.
 //
+// Clocks are rendered INSIDE the nameplates (opponent + player),
+// not as a separate floating panel.
+//
 // For online games, online.js calls:
 //   RedChessClock.getTimes()         — get current {w, b} ms to send to server
 //   RedChessClock.syncFromServer(t)  — correct clock drift after opponent move
@@ -22,8 +25,14 @@
     let _interval    = null;
     let _lastTick    = null;
     let _enabled     = false;
-    let _elW         = null;
-    let _elB         = null;
+
+    // Clock time <span> elements (inside nameplates)
+    let _elW = null;   // #clock-w-time
+    let _elB = null;   // #clock-b-time
+
+    // Nameplate wrapper elements (for active/inactive/low classes)
+    let _npW = null;   // #playerNameplate
+    let _npB = null;   // #opponentNameplate
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
@@ -35,19 +44,24 @@
         return `${m}:${s.toString().padStart(2, '0')}`;
     }
 
+    function _setNameplateState(npEl, isActive, isLow) {
+        if (!npEl) return;
+        npEl.classList.toggle('clock-active',   isActive && !isLow);
+        npEl.classList.toggle('clock-inactive', !isActive);
+        npEl.classList.toggle('clock-low',      isLow);
+    }
+
     function _updateDisplay() {
-        if (_elW) {
-            _elW.textContent = _enabled ? _msToDisplay(_timeW) : '—';
-            _elW.classList.toggle('clock-low',     _enabled && _timeW > 0 && _timeW <= 10000);
-            _elW.classList.toggle('clock-active',  _enabled && _running && _activeColor === 'w');
-            _elW.classList.toggle('clock-inactive',_enabled && _running && _activeColor !== 'w');
-        }
-        if (_elB) {
-            _elB.textContent = _enabled ? _msToDisplay(_timeB) : '—';
-            _elB.classList.toggle('clock-low',     _enabled && _timeB > 0 && _timeB <= 10000);
-            _elB.classList.toggle('clock-active',  _enabled && _running && _activeColor === 'b');
-            _elB.classList.toggle('clock-inactive',_enabled && _running && _activeColor !== 'b');
-        }
+        const wIsActive = _enabled && _running && _activeColor === 'w';
+        const bIsActive = _enabled && _running && _activeColor === 'b';
+        const wIsLow    = _enabled && _timeW > 0 && _timeW <= 10000;
+        const bIsLow    = _enabled && _timeB > 0 && _timeB <= 10000;
+
+        if (_elW) _elW.textContent = _enabled ? _msToDisplay(_timeW) : '—';
+        if (_elB) _elB.textContent = _enabled ? _msToDisplay(_timeB) : '—';
+
+        _setNameplateState(_npW, wIsActive, wIsLow);
+        _setNameplateState(_npB, bIsActive, bIsLow);
     }
 
     function _tick() {
@@ -67,11 +81,18 @@
 
     function _timeout(color) {
         _stop();
+        // Flash flagged state
+        const np = color === 'w' ? _npW : _npB;
+        if (np) {
+            np.classList.remove('clock-active', 'clock-low');
+            np.classList.add('clock-flagged');
+        }
         _updateDisplay();
         const winner  = color === 'w' ? 'b' : 'w';
         const getName = window._getPlayerName || ((c) => c === 'w' ? 'White' : 'Black');
-        const fn = window.endGame;
-        if (typeof fn === 'function') fn(`${getName(color)} ran out of time — ${getName(winner)} wins`);
+        if (typeof window.endGame === 'function') {
+            window.endGame(`${getName(color)} ran out of time — ${getName(winner)} wins`);
+        }
     }
 
     function _stop() {
@@ -87,11 +108,16 @@
 
         if (!tcData || !tcData.minutes) {
             _enabled = false;
+            // Hide clock badges if no time control
+            const cb = document.getElementById('clock-b');
+            const cw = document.getElementById('clock-w');
+            if (cb) cb.hidden = true;
+            if (cw) cw.hidden = true;
             _updateDisplay();
             return;
         }
 
-        const ms   = tcData.minutes * 60 * 1000;
+        const ms    = tcData.minutes * 60 * 1000;
         _increment  = (tcData.increment || 0) * 1000;
         _timeW      = ms;
         _timeB      = ms;
@@ -104,7 +130,6 @@
 
     function switchClock() {
         if (!_enabled) return;
-        // Add increment to the color that just finished their move
         if (_activeColor === 'w') { _timeW += _increment; _activeColor = 'b'; }
         else                      { _timeB += _increment; _activeColor = 'w'; }
         _lastTick = Date.now();
@@ -119,22 +144,15 @@
         _updateDisplay();
     }
 
-    // ─── Online sync helpers ─────────────────────────────────────────────────
+    // ─── Online sync helpers ──────────────────────────────────────────────────
 
-    // Called by online.js after opponent's move arrives (via game:clock_switch).
-    // The server relays the moving player's times right after their move,
-    // so we use them to correct any latency drift in our local countdown.
     function syncFromServer(times) {
         if (!_enabled) return;
         if (typeof times.w === 'number') _timeW = times.w;
         if (typeof times.b === 'number') _timeB = times.b;
-        // Don't touch _activeColor here — switchClock already flipped it
-        // when applyMove fired the local clock switch.
         _updateDisplay();
     }
 
-    // Called by online.js right before emitting game:clock_move to the server.
-    // Returns the current remaining time for both colors in milliseconds.
     function getTimes() {
         return { w: _timeW, b: _timeB };
     }
@@ -158,95 +176,20 @@
         if (_origEndGame) _origEndGame(msg);
     };
 
-    // ─── Build clock UI ───────────────────────────────────────────────────────
+    // ─── Boot: wire up to existing nameplate elements ─────────────────────────
 
-    function _buildUI() {
-        const style = document.createElement('style');
-        style.textContent = `
-            #rc-clock-panel {
-                position: fixed;
-                top: 50%;
-                right: 18px;
-                transform: translateY(-50%);
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                z-index: 999;
-                font-family: 'Courier New', monospace;
-                user-select: none;
-            }
-            .rc-clock-box {
-                background: rgba(10,10,10,0.88);
-                border: 1.5px solid rgba(255,255,255,0.08);
-                border-radius: 10px;
-                padding: 10px 18px;
-                text-align: center;
-                min-width: 90px;
-                transition: border-color 0.2s, box-shadow 0.2s;
-            }
-            .rc-clock-label {
-                font-size: 10px;
-                letter-spacing: 2px;
-                color: rgba(255,255,255,0.35);
-                text-transform: uppercase;
-                margin-bottom: 4px;
-            }
-            .rc-clock-time {
-                font-size: 26px;
-                font-weight: 700;
-                color: rgba(255,255,255,0.25);
-                letter-spacing: 1px;
-                transition: color 0.2s;
-            }
-            .rc-clock-time.clock-active  { color: #e8c97a; }
-            .rc-clock-time.clock-inactive { color: rgba(255,255,255,0.25); }
-            .rc-clock-time.clock-low {
-                color: #e84040 !important;
-                animation: rc-pulse 0.6s ease-in-out infinite alternate;
-            }
-            @keyframes rc-pulse {
-                from { opacity: 1; }
-                to   { opacity: 0.45; }
-            }
-            @media (max-width: 600px) {
-                #rc-clock-panel {
-                    top: auto;
-                    bottom: 70px;
-                    right: 8px;
-                    transform: none;
-                }
-                .rc-clock-time { font-size: 20px; }
-                .rc-clock-box  { padding: 8px 12px; min-width: 70px; }
-            }
-        `;
-        document.head.appendChild(style);
-
-        const panel = document.createElement('div');
-        panel.id = 'rc-clock-panel';
-        panel.innerHTML = `
-            <div class="rc-clock-box">
-                <div class="rc-clock-label">Black</div>
-                <div class="rc-clock-time" id="rc-clock-b">—</div>
-            </div>
-            <div class="rc-clock-box">
-                <div class="rc-clock-label">White</div>
-                <div class="rc-clock-time" id="rc-clock-w">—</div>
-            </div>
-        `;
-        document.body.appendChild(panel);
-
-        _elW = document.getElementById('rc-clock-w');
-        _elB = document.getElementById('rc-clock-b');
-
+    function _boot() {
+        _elW = document.getElementById('clock-w-time');
+        _elB = document.getElementById('clock-b-time');
+        _npW = document.getElementById('playerNameplate');
+        _npB = document.getElementById('opponentNameplate');
         _initFromStorage();
     }
 
-    // ─── Boot ─────────────────────────────────────────────────────────────────
-
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', _buildUI);
+        document.addEventListener('DOMContentLoaded', _boot);
     } else {
-        _buildUI();
+        _boot();
     }
 
     window.RedChessClock = { start, switchClock, isEnabled: () => _enabled, syncFromServer, getTimes };
