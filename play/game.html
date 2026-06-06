@@ -60,30 +60,59 @@
     box-sizing: border-box;
 }
         /* ── Chess clocks ── */
-        .clock {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            padding: 5px 10px;
-            box-sizing: border-box;
-            font-family: 'Cinzel', serif;
-            font-size: 1.35rem;
-            font-weight: 700;
-            border-radius: 4px;
-            background: #111;
-            color: #888;
-            transition: background 0.2s, color 0.2s, opacity 0.2s;
-            letter-spacing: 0.05em;
-        }
-        .clock-active  { background: #2a2416; color: #f0d080; }
-        .clock-inactive { opacity: 0.45; }
-        .clock-low     { background: #5c1a1a !important; color: #ff6b6b !important; opacity: 1 !important; }
-        .clock-flagged { background: #7f0000 !important; color: #fff !important; opacity: 1 !important; }
-
-        /* Hide clocks entirely when no time control is active */
-        .clock[hidden] { display: none !important; }
-
+        /* ── Chess clocks (integrated into nameplate) ── */
+.np-clock {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: #0d0c0a;
+    border: 1px solid #2a2620;
+    font-family: 'Cinzel', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #888;
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s;
+    min-width: 72px;
+    justify-content: center;
+    margin-left: auto;
+}
+.np-clock-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #f0d080;
+    flex-shrink: 0;
+    animation: clockPulse 1s ease-in-out infinite;
+    display: none;
+}
+@keyframes clockPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+}
+.clock-active .np-clock {
+    background: #2a2416;
+    color: #f0d080;
+    border-color: #3a3018;
+}
+.clock-active .np-clock .np-clock-dot { display: block; }
+.clock-inactive .np-clock { opacity: 0.45; }
+.clock-low .np-clock {
+    background: #5c1a1a !important;
+    color: #ff6b6b !important;
+    border-color: #7f2020 !important;
+    opacity: 1 !important;
+}
+.clock-low .np-clock .np-clock-dot { background: #ff6b6b; display: block; }
+.clock-flagged .np-clock {
+    background: #7f0000 !important;
+    color: #fff !important;
+    opacity: 1 !important;
+}
+.np-clock[hidden] { display: none !important; }
         /* ── PC fix: prevent text selection while dragging pieces ── */
         #board,
         #board *,
@@ -130,19 +159,6 @@
         }
 
         /* Mobile analyze button — hidden on desktop only */
-        @media (min-width: 701px) {
-    .board-col {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        width: 100%;
-    }
-    #clock-b        { order: 0; }
-    .opponent-nameplate { order: 0; }
-    .board-container { order: 2; }
-    .file-labels    { order: 3; }
-    #clock-w        { order: 4; }
-}
         /* Mobile history nav — hidden on desktop */
         .mobile-nav {
             display: none;
@@ -175,32 +191,6 @@
            MOBILE layout  <= 700 px
            Desktop (game.css) is completely unchanged.
         ════════════════════════════════════════════ */
-        /* ── PC: clocks sit on the right side of board vertically ── */
-@media (min-width: 701px) {
-    .board-col {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-
-    #clock-b {
-        order: 0;   /* top — black */
-        width: 100%;
-    }
-
-    .board-container {
-        order: 1;
-    }
-
-    .file-labels {
-        order: 2;
-    }
-
-    #clock-w {
-        order: 3;   /* bottom — white */
-        width: 100%;
-    }
-}
         @media (max-width: 700px) {
 
             body {
@@ -391,14 +381,18 @@
                     <span class="opponent-avatar" id="opponentAvatar"></span>
                     <span class="opponent-name" id="opponentName"></span>
                     <span class="opponent-elo" id="opponentElo"></span>
+                    <div id="clock-b" class="np-clock clock-inactive"><span class="np-clock-dot" id="clock-b-dot"></span><span id="clock-b-time">5:00</span></div>
                 </div>
-                <div id="clock-b" class="clock clock-inactive"><span id="clock-b-time">5:00</span></div>
                 <div class="board-container" id="boardContainer">
                     <div id="board"></div>
                     <svg id="arrowLayer" xmlns="http://www.w3.org/2000/svg"></svg>
                 </div>
                 <div class="file-labels" id="fileLabels"></div>
-                <div id="clock-w" class="clock clock-inactive"><span id="clock-w-time">5:00</span></div>
+<div class="opponent-nameplate" id="playerNameplate">
+    <span class="opponent-avatar" id="playerAvatar">♟</span>
+    <span class="opponent-name" id="playerName">You</span>
+    <div id="clock-w" class="np-clock clock-inactive"><span class="np-clock-dot" id="clock-w-dot"></span><span id="clock-w-time">5:00</span></div>
+</div>
             </div>
         </div>
 
