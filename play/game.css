@@ -517,7 +517,21 @@ body {
     :root {
         --board-size: min(96vw, 96vh - 300px);
     }
+    .square {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        overflow: hidden !important;
+    }
 
+    .piece {
+        width: 85% !important;
+        height: 85% !important;
+        object-fit: contain !important;
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+    }
     /* ── Top bar: back on left, turn indicator on right ── */
     .back-btn {
         font-size: 13px;
