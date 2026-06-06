@@ -499,7 +499,7 @@
                 mobileBtn.style.display = shown && isMobile? 'block' : 'none';
             };
             new MutationObserver(sync).observe(desktopBtn, { attributes: true, attributeFilter: ['style'] });
-            window.addEventListener('resize',size)
+            window.addEventListener('resize', sync)
         })();
 
         // ── Right-click: highlights & arrows ──────────────────────────────────
