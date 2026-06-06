@@ -160,34 +160,29 @@ function getDragSize() {
 // so it is always visible while being dragged.
 function createDragEl(src, startX, startY) {
     const size = getDragSize();
+    const isTouch = window.matchMedia('(pointer: coarse)').matches;
+    const liftY = isTouch ? size * 0.5 : size * 0.72;
 
-    // Find the piece at the pointer-down point
     const hitEl  = document.elementFromPoint(startX, startY);
     const hitSq  = hitEl?.closest("[data-row]");
     _dragPiece   = hitSq?.querySelector(".piece") ?? null;
-    const isTouch = window.matchMedia('(pointer: coarse)').matches;
-    const liftY = isTouch ? size * 0.5 : size * 0.72;
-    // then in the cssText:
-    transform:translate(${startX - size/2}px,${startY - liftY}px) scale(1.22);
+
     const img = _dragPiece ?? document.createElement("img");
 
     if (!_dragPiece) {
-        // Fallback: synthesise a ghost (shouldn't normally be reached)
         img.src       = src;
         img.className = "anim-ghost";
     }
 
-    // Move element to body so fixed-positioning is relative to the viewport
     document.body.appendChild(img);
 
-    // Place it immediately at 1.22× above the cursor — _dragLoop takes over from here
     img.style.cssText = `
         position:fixed; left:0; top:0;
         width:${size}px; height:${size}px;
         object-fit:contain; pointer-events:none;
         z-index:1000; transform-origin:50% 50%;
         will-change:transform,filter;
-        transform:translate(${startX - size/2}px,${startY - size*.72}px) scale(1.22);
+        transform:translate(${startX - size/2}px,${startY - liftY}px) scale(1.22);
         filter:drop-shadow(0 18px 36px rgba(0,0,0,.85))
                drop-shadow(0 6px 12px rgba(0,0,0,.6))
                drop-shadow(0 0 16px rgba(201,168,76,.45));
