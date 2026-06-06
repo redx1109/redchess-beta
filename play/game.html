@@ -681,8 +681,8 @@
     <script>
         (function () {
             var tc = null;
-            try { tc = JSON.parse(localStorage.getItem('timeControl') || 'null'); } catch(e) {}
-            if (!tc || !tc.active) {
+            try { tc = JSON.parse(localStorage.getItem('chessTimeControl') || 'null'); } catch(e) {}
+            if (!tc || !tc.minutes) {
                 var cb = document.getElementById('clock-b');
                 var cw = document.getElementById('clock-w');
                 if (cb) cb.hidden = true;
