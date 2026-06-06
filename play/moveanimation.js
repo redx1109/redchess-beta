@@ -344,17 +344,17 @@ function _dragLoop(now) {
     if (!dragEl) { _rafId = null; return; }
 
     const size = getDragSize();
-    const t    = (now - _dragT0) / 1000;
     const isTouch = window.matchMedia('(pointer: coarse)').matches;
     const liftY = isTouch ? size * 0.5 : size * 0.72;
-    dragEl.style.transform = `translate(${_curX - size/2}px,${_curY - liftY + breatheY}px) scale(${breatheScale}) rotate(${breatheTilt}deg)`;
+    const t = (now - _dragT0) / 1000;
+
     _dragVX *= 0.82;
     const tilt         = Math.max(-14, Math.min(14, _dragVX * 1.2));
     const breatheY     = Math.sin(t * 3.8) * 2.8;
     const breatheScale = 1.22 + Math.sin(t * 3.8) * 0.018;
     const breatheTilt  = tilt + Math.sin(t * 2.1) * 0.8;
 
-    dragEl.style.transform = `translate(${_curX - size/2}px,${_curY - size*.72 + breatheY}px) scale(${breatheScale}) rotate(${breatheTilt}deg)`;
+    dragEl.style.transform = `translate(${_curX - size/2}px,${_curY - liftY + breatheY}px) scale(${breatheScale}) rotate(${breatheTilt}deg)`;
 
     const shadowY = 20 + Math.sin(t * 3.8) * 4;
     const shadowB = 38 + Math.sin(t * 3.8) * 6;
