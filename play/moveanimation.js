@@ -151,7 +151,8 @@ let _dragPiece  = null;   // reference to the lifted board piece element
 
 function getDragSize() {
     const sq = boardEl.querySelector(".square");
-    return sq ? sq.getBoundingClientRect().width * 1.28 : 80;
+    const isTouch = window.matchMedia('(pointer: coarse)').matches;
+    return sq ? sq.getBoundingClientRect().width * (isTouch ? 1.0 : 1.28) : 80;
 }
 
 // Lifts the ACTUAL piece element off the board into document.body.
@@ -164,7 +165,10 @@ function createDragEl(src, startX, startY) {
     const hitEl  = document.elementFromPoint(startX, startY);
     const hitSq  = hitEl?.closest("[data-row]");
     _dragPiece   = hitSq?.querySelector(".piece") ?? null;
-
+    const isTouch = window.matchMedia('(pointer: coarse)').matches;
+    const liftY = isTouch ? size * 0.5 : size * 0.72;
+    // then in the cssText:
+    transform:translate(${startX - size/2}px,${startY - liftY}px) scale(1.22);
     const img = _dragPiece ?? document.createElement("img");
 
     if (!_dragPiece) {
@@ -346,7 +350,9 @@ function _dragLoop(now) {
 
     const size = getDragSize();
     const t    = (now - _dragT0) / 1000;
-
+    const isTouch = window.matchMedia('(pointer: coarse)').matches;
+    const liftY = isTouch ? size * 0.5 : size * 0.72;
+    dragEl.style.transform = `translate(${_curX - size/2}px,${_curY - liftY + breatheY}px) scale(${breatheScale}) rotate(${breatheTilt}deg)`;
     _dragVX *= 0.82;
     const tilt         = Math.max(-14, Math.min(14, _dragVX * 1.2));
     const breatheY     = Math.sin(t * 3.8) * 2.8;
