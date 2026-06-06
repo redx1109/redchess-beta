@@ -515,7 +515,7 @@ body {
 
     /* Board fills the viewport width with a small margin */
     :root {
-        --board-size: min(96vw, 96vh - 280px);
+        --board-size: min(96vw, 96vh - 300px);
     }
 
     /* ── Top bar: back on left, turn indicator on right ── */
@@ -526,11 +526,13 @@ body {
     }
 
     .turn-indicator {
-        font-size: 9px;
-        padding: 4px 9px;
-        letter-spacing: 0.08em;
+        position: fixed;
         top: 0.7rem;
-        right: 0.8rem;
+        left: 50%;
+        transform: translateX(-50%);
+        right: unset !important;
+        width: auto !important;
+        white-space: nowrap;
     }
 
     /* ── Action buttons: fixed below the top bar so they never overlap ── */
@@ -607,10 +609,16 @@ body {
     }
     /* ── Nameplates on mobile ── */
     .opponent-nameplate {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
         width: 96vw !important;
         padding: 5px 10px !important;
         box-sizing: border-box;
-        flex-shrink: 0;
+        background: #141210;
+        border-radius: 5px;
+        border: 1px solid #2a2620;
+        gap: 8px !important;
     }
     .opponent-name {
         font-size: 11px !important;
@@ -619,9 +627,12 @@ body {
         font-size: 10px !important;
     }
     .np-clock {
-        font-size: 0.85rem !important;
-        min-width: 58px !important;
-        padding: 3px 7px !important;
+        font-size: 0.9rem !important;
+        min-width: 60px !important;
+        max-width: 70px !important;
+        padding: 3px 8px !important;
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
     }
 }
 
