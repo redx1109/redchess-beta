@@ -494,10 +494,12 @@
             const mobileBtn  = document.getElementById('analyzeBtnMobile');
             if (!desktopBtn || !mobileBtn) return;
             const sync = () => {
+                const isMobile = window.innerWidth <= 700;
                 const shown = desktopBtn.style.display && desktopBtn.style.display !== 'none';
-                mobileBtn.style.display = shown ? 'block' : 'none';
+                mobileBtn.style.display = shown && isMobile? 'block' : 'none';
             };
             new MutationObserver(sync).observe(desktopBtn, { attributes: true, attributeFilter: ['style'] });
+            window.addEventListener('resize',size)
         })();
 
         // ── Right-click: highlights & arrows ──────────────────────────────────
