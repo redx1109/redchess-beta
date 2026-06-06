@@ -461,7 +461,53 @@ body {
 }
 .analyze-btn:hover { background: #e0bc66; }
 
-
+/* ── Nameplates + integrated clock ── */
+.opponent-nameplate {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-sizing: border-box;
+}
+.np-clock {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: #0d0c0a;
+    border: 1px solid #2a2620;
+    font-family: 'Cinzel', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #888;
+    flex-shrink: 0;
+    min-width: 72px;
+    justify-content: center;
+    margin-left: auto;
+    transition: background 0.2s, color 0.2s;
+}
+.np-clock-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #f0d080;
+    flex-shrink: 0;
+    display: none;
+    animation: clockPulse 1s ease-in-out infinite;
+}
+@keyframes clockPulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.2; }
+}
+.clock-active   .np-clock { background: #2a2416; color: #f0d080; border-color: #3a3018; }
+.clock-active   .np-clock .np-clock-dot { display: block; }
+.clock-inactive .np-clock { opacity: 0.45; }
+.clock-low      .np-clock { background: #5c1a1a !important; color: #ff6b6b !important; border-color: #7f2020 !important; opacity: 1 !important; }
+.clock-low      .np-clock .np-clock-dot { background: #ff6b6b; display: block; }
+.clock-flagged  .np-clock { background: #7f0000 !important; color: #fff !important; opacity: 1 !important; }
+.np-clock[hidden] { display: none !important; }
 /* ═══════════════════════════════════════════════════════════════════════════════
    MOBILE  (≤ 600px)
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -469,7 +515,7 @@ body {
 
     /* Board fills the viewport width with a small margin */
     :root {
-        --board-size: min(96vw, 96vh - 200px);
+        --board-size: min(96vw, 96vh - 280px);
     }
 
     /* ── Top bar: back on left, turn indicator on right ── */
@@ -558,6 +604,24 @@ body {
 
     .board {
         touch-action: none;
+    }
+    /* ── Nameplates on mobile ── */
+    .opponent-nameplate {
+        width: 96vw !important;
+        padding: 5px 10px !important;
+        box-sizing: border-box;
+        flex-shrink: 0;
+    }
+    .opponent-name {
+        font-size: 11px !important;
+    }
+    .opponent-elo {
+        font-size: 10px !important;
+    }
+    .np-clock {
+        font-size: 0.85rem !important;
+        min-width: 58px !important;
+        padding: 3px 7px !important;
     }
 }
 
