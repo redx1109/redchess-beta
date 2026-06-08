@@ -71,7 +71,9 @@ function buildMobileStrip() {
 // ─── Board rendering ──────────────────────────────────────────────────────────
 
 function renderPosition(fen, highlightSqs = [], bestSqs = []) {
-    clearClassificationHighlights();
+    if (typeof clearClassificationHighlights === "function") {
+       clearClassificationHighlights();
+    }
     const chess = new Chess(fen);
     boardEl.innerHTML = "";
 
