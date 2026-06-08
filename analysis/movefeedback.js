@@ -117,34 +117,38 @@ function playerWinProb(cp, isWhite, rating = 1500) {
 //
 // @param {object} move  – chess.js verbose move: { piece, captured?, flags?, isQuietSacrifice? }
 // @returns {boolean}
-function detectSacrifice(move, evalBefore, evalAfter) {
+function detectSacrifice(move, evalBefore, evalAfter, chess) {
     if (!move) return false;
 
     const piece = move.promotion ? move.promotion : move.piece;
     const movingVal = PIECE_VALUES[piece] ?? 0;
 
-    // pawns never count
     if (movingVal < 3) return false;
 
-    const evalLoss = evalBefore - evalAfter; // moving player's perspective
+    const evalLoss = evalBefore - evalAfter;
 
-    // ── Capture sacrifice ──────────────────────────────────────────────
     if (move.captured) {
         const capturedVal = PIECE_VALUES[move.captured] ?? 0;
 
-        // minor piece for pawn
+        // ── check if captured piece was protected ──────────────────────
+        const opponentColor = move.color === 'w' ? 'b' : 'w';
+        const capturedWasProtected = chess
+            ? chess.attackers(move.to, opponentColor).length > 0
+            : false;
+
+        // taking unprotected piece = NOT a sacrifice, just free material
+        if (!capturedWasProtected) return false;
+
+        // minor piece for pawn (protected)
         if (move.captured === 'p') return true;
 
-        // rook for minor, queen for rook/minor
+        // rook for minor, queen for rook/minor (protected)
         if (movingVal > capturedVal + 1) return true;
     }
 
-    // ── Quiet sacrifice ────────────────────────────────────────────────
-    // no capture on this move, but piece is left hanging
-    // eval stays same or doesn't drop more than 0.5
-    if (!move.captured && evalLoss <= 0.50) {
-        // isQuietSacrifice flag confirms piece is actually hanging
-        if (move.isQuietSacrifice === true) return true;
+    // quiet sacrifice
+    if (!move.captured && move.isQuietSacrifice === true && evalLoss <= 0.50) {
+        return true;
     }
 
     return false;
@@ -193,7 +197,7 @@ function toWhitePov(cp, sideToMove) {
 }
 
 // Then when calling classifyMove:
-function classifyMove(cpBefore, cpAfter, isWhite, moveIdx, playedMove, bestMove, move, fenAfter, cpBestAfter, playerRating = 1500) {
+function classifyMove(cpBefore, cpAfter, isWhite, moveIdx, playedMove, bestMove, move, fenAfter, cpBestAfter, playerRating = 1500, chess=null) {
 
     // ── Book ──────────────────────────────────────────────────────────────────
     // A move is Book only if the resulting position is found in the ECO
@@ -272,7 +276,7 @@ function classifyMove(cpBefore, cpAfter, isWhite, moveIdx, playedMove, bestMove,
     // Best (or nearly best) piece sacrifice that keeps the position reasonable.
     if (
         nearlyBest            &&
-        detectSacrifice(move, evalBefore, evalAfter) &&
+        detectSacrifice(move, evalBefore, evalAfter, chess) &&
         evalLoss <= 0.50   
     ) return "brilliant";
 
