@@ -13,7 +13,10 @@
      9. events.js         — all addEventListener bindings
    ══════════════════════════════════════════════════════════════ */
 // ─── Constants ────────────────────────────────────────────────────────────────
-
+function isSquareDefended(chess, square, byColor) {
+    const moves = chess.moves({ verbose: true });
+    return moves.some(m => m.color === byColor && m.to === square);
+}
 const CLASSIFICATIONS = [
     { name: "brilliant",  label: "Brilliant"  },
     { name: "great",      label: "Great"      },
