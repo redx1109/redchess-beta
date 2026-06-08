@@ -245,6 +245,7 @@ const sideAfter  = fenAfter.split(' ')[1];
 const cpBeforeWP = sideBefore === 'b' ? -cpPrev : cpPrev;
 const cpAfterWP  = sideAfter  === 'b' ? -cpNow  : cpNow;
 const playerRating = isWhite ? whiteRating : blackRating;
+const chess = new Chess(positions[i - 1]?.fen || "start");           
 const cls = classifyMove(
     cpBeforeWP,
     cpAfterWP,
