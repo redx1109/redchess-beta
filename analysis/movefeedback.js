@@ -264,7 +264,7 @@ function classifyMove(cpBefore, cpAfter, isWhite, moveIdx, playedMove, bestMove,
         !detectSacrifice(move)     && 
         Math.abs(cpAfter) < 9000   &&
         evalAfter < 3.0            &&
-        wpBefore  >= 0.8    0          &&
+        wpBefore  >= 0.80          &&
         wpAfter   <= 0.55
     ) return "miss";
 
