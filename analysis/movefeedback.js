@@ -117,20 +117,35 @@ function playerWinProb(cp, isWhite, rating = 1500) {
 //
 // @param {object} move  – chess.js verbose move: { piece, captured?, flags?, isQuietSacrifice? }
 // @returns {boolean}
-function detectSacrifice(move) {
+function detectSacrifice(move, evalBefore, evalAfter) {
     if (!move) return false;
 
     const piece = move.promotion ? move.promotion : move.piece;
     const movingVal = PIECE_VALUES[piece] ?? 0;
-    if (movingVal < 3) return false; // must be at least a minor piece
 
-    // 1. Capture sacrifice: gave up more than was taken
+    // pawns never count
+    if (movingVal < 3) return false;
+
+    const evalLoss = evalBefore - evalAfter; // moving player's perspective
+
+    // ── Capture sacrifice ──────────────────────────────────────────────
     if (move.captured) {
         const capturedVal = PIECE_VALUES[move.captured] ?? 0;
+
+        // minor piece for pawn
+        if (move.captured === 'p') return true;
+
+        // rook for minor, queen for rook/minor
         if (movingVal > capturedVal + 1) return true;
     }
-    // 2. Quiet sacrifice: caller confirmed piece is left en prise
-    if (move.isQuietSacrifice === true) return true;
+
+    // ── Quiet sacrifice ────────────────────────────────────────────────
+    // no capture on this move, but piece is left hanging
+    // eval stays same or doesn't drop more than 0.5
+    if (!move.captured && evalLoss <= 0.50) {
+        // isQuietSacrifice flag confirms piece is actually hanging
+        if (move.isQuietSacrifice === true) return true;
+    }
 
     return false;
 }
@@ -246,10 +261,10 @@ function classifyMove(cpBefore, cpAfter, isWhite, moveIdx, playedMove, bestMove,
     //   • mate sequence → skip miss entirely
     if (
         !playedBest                &&
-        !detectSacrifice(move)     &&  // ✅ sacrifices handled separately
+        !detectSacrifice(move)     && 
         Math.abs(cpAfter) < 9000   &&
         evalAfter < 3.0            &&
-        wpBefore  >= 0.80          &&
+        wpBefore  >= 0.8    0          &&
         wpAfter   <= 0.55
     ) return "miss";
 
@@ -257,9 +272,8 @@ function classifyMove(cpBefore, cpAfter, isWhite, moveIdx, playedMove, bestMove,
     // Best (or nearly best) piece sacrifice that keeps the position reasonable.
     if (
         nearlyBest            &&
-        detectSacrifice(move) &&
-        wpAfter  >= 0.55      &&
-        wpBefore <= 0.90
+        detectSacrifice(move, evalBefore, evalAfter) &&
+        evalLoss <= 0.50   
     ) return "brilliant";
 
     // ── Great Move (!) ────────────────────────────────────────────────────────
