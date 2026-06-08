@@ -255,7 +255,8 @@ const cls = classifyMove(
     positions[i].move,
     fenAfter,
     null,   // cpBestAfter not available
-    playerRating  // playerRating — swap for actual rating if you have it
+    playerRating,// playerRating — swap for actual rating if you have it
+    chess
 );
            
 const acc = moveAccuracy(cpBeforeWP, cpAfterWP, isWhite, cls, playerRating);
