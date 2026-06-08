@@ -125,19 +125,17 @@ function detectSacrifice(move, evalBefore, evalAfter, chess) {
 
     if (movingVal < 3) return false;
 
-    const evalLoss = evalBefore - evalAfter;
-
     if (move.captured) {
         const capturedVal = PIECE_VALUES[move.captured] ?? 0;
-
-        // ── check if captured piece was protected ──────────────────────
         const opponentColor = move.color === 'w' ? 'b' : 'w';
-        const capturedWasProtected = chess
-            ? chess.attackers(move.to, opponentColor).length > 0
+
+        // check if captured piece was protected by opponent
+        const wasProtected = chess
+            ? isSquareDefended(chess, move.to, opponentColor)
             : false;
 
-        // taking unprotected piece = NOT a sacrifice, just free material
-        if (!capturedWasProtected) return false;
+        // taking unprotected piece = NOT a sacrifice
+        if (!wasProtected) return false;
 
         // minor piece for pawn (protected)
         if (move.captured === 'p') return true;
@@ -147,9 +145,7 @@ function detectSacrifice(move, evalBefore, evalAfter, chess) {
     }
 
     // quiet sacrifice
-    if (!move.captured && move.isQuietSacrifice === true && evalLoss <= 0.50) {
-        return true;
-    }
+    if (!move.captured && move.isQuietSacrifice === true) return true;
 
     return false;
 }
