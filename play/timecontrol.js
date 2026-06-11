@@ -34,6 +34,41 @@
     let _npW = null;   // #playerNameplate
     let _npB = null;   // #opponentNameplate
 
+    // ─── Persistence ─────────────────────────────────────────────────────────
+
+    // Key scoped to the active game so a new game always starts fresh
+    function _saveKey() {
+        try {
+            const room = JSON.parse(localStorage.getItem('onlineRoom') || 'null');
+            if (room && room.roomId) return 'clockState_' + room.roomId;
+        } catch(e) {}
+        return 'clockState_local';
+    }
+
+    function _saveState() {
+        if (!_enabled) return;
+        try {
+            localStorage.setItem(_saveKey(), JSON.stringify({
+                w:           _timeW,
+                b:           _timeB,
+                activeColor: _activeColor,
+                started:     _running || (_timeW === 0 || _timeB === 0) // treat flagged as started
+            }));
+        } catch(e) {}
+    }
+
+    function _loadState() {
+        try {
+            const raw = localStorage.getItem(_saveKey());
+            if (!raw) return null;
+            return JSON.parse(raw);
+        } catch(e) { return null; }
+    }
+
+    function _clearState() {
+        try { localStorage.removeItem(_saveKey()); } catch(e) {}
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     function _msToDisplay(ms) {
@@ -77,10 +112,13 @@
             if (_timeB === 0) { _timeout('b'); return; }
         }
         _updateDisplay();
+        // Save every tick so a refresh restores accurately
+        _saveState();
     }
 
     function _timeout(color) {
         _stop();
+        _clearState();
         // Flash flagged state
         const np = color === 'w' ? _npW : _npB;
         if (np) {
@@ -117,12 +155,29 @@
             return;
         }
 
-        const ms    = tcData.minutes * 60 * 1000;
-        _increment  = (tcData.increment || 0) * 1000;
-        _timeW      = ms;
-        _timeB      = ms;
-        _activeColor = 'w';
-        _enabled    = true;
+        const ms   = tcData.minutes * 60 * 1000;
+        _increment = (tcData.increment || 0) * 1000;
+        _enabled   = true;
+
+        // ── FIX: restore saved mid-game clock state if it exists ─────────────
+        const saved = _loadState();
+        if (saved && typeof saved.w === 'number' && typeof saved.b === 'number') {
+            _timeW       = saved.w;
+            _timeB       = saved.b;
+            _activeColor = saved.activeColor || 'w';
+            // If the clock was running when the page was closed, resume it
+            if (saved.started && !window.gameOver) {
+                _running  = true;
+                _lastTick = Date.now();
+                _interval = setInterval(_tick, 100);
+            }
+        } else {
+            // Fresh game — start from full time
+            _timeW       = ms;
+            _timeB       = ms;
+            _activeColor = 'w';
+        }
+
         _updateDisplay();
     }
 
@@ -133,6 +188,7 @@
         if (_activeColor === 'w') { _timeW += _increment; _activeColor = 'b'; }
         else                      { _timeB += _increment; _activeColor = 'w'; }
         _lastTick = Date.now();
+        _saveState();
         _updateDisplay();
     }
 
@@ -141,6 +197,7 @@
         _running  = true;
         _lastTick = Date.now();
         _interval = setInterval(_tick, 100);
+        _saveState();
         _updateDisplay();
     }
 
@@ -150,6 +207,7 @@
         if (!_enabled) return;
         if (typeof times.w === 'number') _timeW = times.w;
         if (typeof times.b === 'number') _timeB = times.b;
+        _saveState();
         _updateDisplay();
     }
 
@@ -173,6 +231,7 @@
     const _origEndGame = window.endGame;
     window.endGame = function (msg) {
         _stop();
+        _clearState();   // wipe saved state so a new game starts fresh
         if (_origEndGame) _origEndGame(msg);
     };
 
