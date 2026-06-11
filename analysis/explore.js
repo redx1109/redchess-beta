@@ -117,10 +117,15 @@ function tryExploreMove(from, to) {
     classifyExploreMove(result, isWhite);
     renderExplorePosition();
 
-    if (exploreChess.isCheckmate())      showExploreBanner("Checkmate!");
-    else if (exploreChess.isDraw())      showExploreBanner("Draw!");
-    else if (exploreChess.inCheck())     showExploreBanner("Check!");
-    else                                 showExploreBanner("Explore mode — click a piece to move");
+    // Support both chess.js v0.x and v1.x APIs
+    const inCheckmate = exploreChess.isCheckmate?.() ?? exploreChess.in_checkmate?.() ?? false;
+    const inDraw      = exploreChess.isDraw?.()      ?? exploreChess.in_draw?.()      ?? false;
+    const inCheck     = exploreChess.inCheck?.()     ?? exploreChess.in_check?.()     ?? false;
+
+    if (inCheckmate)  showExploreBanner("Checkmate!");
+    else if (inDraw)  showExploreBanner("Draw!");
+    else if (inCheck) showExploreBanner("Check!");
+    else              showExploreBanner("Explore mode — click a piece to move");
 
     return true;
 }
@@ -244,10 +249,18 @@ function showExploreFeedback(cls, acc, cpWP, san) {
     const bestEl = document.getElementById("detailBest");
 
     if (iconEl) {
-        // Force a reload if the src hasn't changed (same classification twice in a row)
-        const newSrc = `../icons/${cls}.png`;
+        // Valid icon filenames that actually exist in /icons/
+        const validIcons = new Set([
+            "brilliant", "great", "best", "good", "book",
+            "inaccuracy", "mistake", "blunder", "miss", "forced"
+        ]);
+        const iconFallback = { theoryend: "book" };
+        const iconName     = validIcons.has(cls) ? cls : (iconFallback[cls] ?? "good");
+        const newSrc       = `../icons/${iconName}.png`;
+
+        // Force reload if src hasn't changed (same cls twice in a row)
         if (iconEl.src.endsWith(newSrc)) {
-            iconEl.src = "";          // clear first
+            iconEl.src = "";
             requestAnimationFrame(() => { iconEl.src = newSrc; });
         } else {
             iconEl.src = newSrc;
