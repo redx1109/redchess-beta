@@ -1,83 +1,37 @@
 /* ══════════════════════════════════════════════════════════════
-   RED CHESS — EXPLORE MODE
+   RED CHESS — EXPLORE MODE (always on, no toggle button)
    Drop this as explore.js and load it AFTER board.js in HTML
    ══════════════════════════════════════════════════════════════ */
 
 // ─── State ────────────────────────────────────────────────────
-let exploreMode   = false;
-let exploreChess  = null;   // chess.js instance for explore line
-let selectedSq    = null;   // currently selected square
-let exploreLegalMoves = []; // legal moves from selected square
+let exploreChess      = null;   // chess.js instance for explore line
+let selectedSq        = null;   // currently selected square
+let exploreLegalMoves = [];     // legal moves from selected square
 
-// ─── Toggle button (injected into nav-strip) ──────────────────
-function initExploreButton() {
-    const strip = document.querySelector(".nav-strip");
-    if (!strip || document.getElementById("exploreBtn")) return;
-
-    const btn = document.createElement("button");
-    btn.id          = "exploreBtn";
-    btn.className   = "nav-btn";
-    btn.title       = "Explore moves";
-    btn.textContent = "⊕ Explore";
-    btn.style.cssText = "padding: 0 10px; font-size: 11px; opacity: 0.6;";
-    btn.onclick = toggleExploreMode;
-    strip.appendChild(btn);
-
-    // 🔥 Single delegated listener — survives innerHTML wipes
-    boardEl.addEventListener("click", (e) => {
-        if (!exploreMode) return;
-        const sqEl = e.target.closest(".square");
-        if (!sqEl) return;
-        onExploreSquareClick(sqEl);
-    });
-}
-// ─── Enter / Exit ─────────────────────────────────────────────
-function toggleExploreMode() {
-    if (exploreMode) exitExploreMode();
-    else             enterExploreMode();
+// ─── Init (called whenever analysis screen becomes visible) ───
+function initExploreMode() {
+    // Delegated listener — attach once, survive innerHTML wipes
+    if (!boardEl._exploreListenerAttached) {
+        boardEl.addEventListener("click", (e) => {
+            const sqEl = e.target.closest(".square");
+            if (sqEl) onExploreSquareClick(sqEl);
+        });
+        boardEl._exploreListenerAttached = true;
+    }
+    enterExploreMode();
 }
 
+// ─── Enter ────────────────────────────────────────────────────
 function enterExploreMode() {
-    exploreMode  = true;
-    selectedSq   = null;
+    selectedSq        = null;
     exploreLegalMoves = [];
 
-    // Spin up chess.js from current position
-    const pos = positions[currentIdx];
-    exploreChess = new Chess(pos.fen);
+    const pos     = positions[currentIdx];
+    exploreChess  = new Chess(pos.fen);
     explorePrevCp = analysisData[currentIdx]?.cp ?? 0;
-    // Update button
-    const btn = document.getElementById("exploreBtn");
-    if (btn) {
-        btn.textContent   = "✕ Exit Explore";
-        btn.style.opacity = "1";
-        btn.style.color   = "#c9a84c";
-    }
 
-    // Show hint bar
     showExploreBanner("Explore mode — click a piece to move");
-
-    // Re-render with explore click handlers
     renderExplorePosition();
-}
-
-function exitExploreMode() {
-    exploreMode  = false;
-    selectedSq   = null;
-    exploreLegalMoves = [];
-    exploreChess = null;
-
-    const btn = document.getElementById("exploreBtn");
-    if (btn) {
-        btn.textContent   = "⊕ Explore";
-        btn.style.opacity = "0.6";
-        btn.style.color   = "";
-    }
-
-    hideExploreBanner();
-
-    // Restore normal position view
-    goToMove(currentIdx);
 }
 
 // ─── Banner ───────────────────────────────────────────────────
@@ -98,30 +52,24 @@ function showExploreBanner(text) {
         const boardCol = document.querySelector(".board-col");
         if (boardCol) boardCol.appendChild(bar);
     }
-    bar.textContent = text;
+    bar.textContent   = text;
     bar.style.display = "block";
-}
-
-function hideExploreBanner() {
-    const bar = document.getElementById("exploreBar");
-    if (bar) bar.style.display = "none";
 }
 
 // ─── Render explore position with clickable squares ───────────
 function renderExplorePosition() {
     if (!exploreChess) return;
-    const hist = exploreChess.history({ verbose: true });
-    const last = hist[hist.length - 1];
+    const hist  = exploreChess.history({ verbose: true });
+    const last  = hist[hist.length - 1];
     const hlSqs = last ? [last.from, last.to] : [];
 
     renderPosition(exploreChess.fen(), hlSqs, []);
-    refreshExploreHighlights(); // dots + selected sq redrawn on top
+    refreshExploreHighlights();
 }
-
 
 // ─── Click handler ────────────────────────────────────────────
 function onExploreSquareClick(sqEl) {
-    if (!exploreMode || !exploreChess) return;
+    if (!exploreChess) return;
     const sq = sqEl.dataset.sq;
     if (!sq) return;
 
@@ -131,7 +79,7 @@ function onExploreSquareClick(sqEl) {
             return;
         }
         if (sq === selectedSq) {
-            selectedSq = null;
+            selectedSq        = null;
             exploreLegalMoves = [];
             refreshExploreHighlights();
             return;
@@ -140,52 +88,39 @@ function onExploreSquareClick(sqEl) {
 
     const piece = exploreChess.get(sq);
     if (!piece || piece.color !== exploreChess.turn()) {
-        selectedSq = null;
+        selectedSq        = null;
         exploreLegalMoves = [];
         refreshExploreHighlights();
         return;
     }
 
-    selectedSq = sq;
+    selectedSq        = sq;
     exploreLegalMoves = exploreChess.moves({ square: sq, verbose: true }).map(m => m.to);
     refreshExploreHighlights();
 }
+
 // ─── Try making a move ────────────────────────────────────────
 function tryExploreMove(from, to) {
-    // Handle promotion — always promote to queen for simplicity
     const result = exploreChess.move({ from, to, promotion: "q" });
     if (!result) return false;
 
-    selectedSq = null;
+    selectedSq        = null;
     exploreLegalMoves = [];
 
-    // Sound
     playSound(result.captured ? "capture" : "move");
 
-    // Live eval + move feedback
-    const fen        = exploreChess.fen();
-    const isWhite    = result.color === "w";
-    const whiteTurn  = exploreChess.turn() === "w"; // whose turn AFTER the move
+    const fen       = exploreChess.fen();
+    const isWhite   = result.color === "w";
+    const whiteTurn = exploreChess.turn() === "w";
 
-    // Kick off live eval search
     startLiveEval(fen, whiteTurn);
-
-    // Classify the move (compare prev position eval to new)
     classifyExploreMove(result, isWhite);
-
-    // Re-render board with new position
     renderExplorePosition();
 
-    // Update banner
-    if (exploreChess.isCheckmate()) {
-        showExploreBanner("Checkmate!");
-    } else if (exploreChess.isDraw()) {
-        showExploreBanner("Draw!");
-    } else if (exploreChess.inCheck()) {
-        showExploreBanner("Check!");
-    } else {
-        showExploreBanner("Explore mode — click a piece to move");
-    }
+    if (exploreChess.isCheckmate())      showExploreBanner("Checkmate!");
+    else if (exploreChess.isDraw())      showExploreBanner("Draw!");
+    else if (exploreChess.inCheck())     showExploreBanner("Check!");
+    else                                 showExploreBanner("Explore mode — click a piece to move");
 
     return true;
 }
@@ -195,18 +130,13 @@ function refreshExploreHighlights() {
     boardEl.querySelectorAll(".square").forEach(sqEl => {
         const sq = sqEl.dataset.sq;
         sqEl.classList.remove("explore-selected", "explore-dot");
-
-        // Remove existing dot overlays
         sqEl.querySelectorAll(".explore-legal-dot").forEach(d => d.remove());
 
-        if (sq === selectedSq) {
-            sqEl.classList.add("explore-selected");
-        }
+        if (sq === selectedSq) sqEl.classList.add("explore-selected");
 
         if (exploreLegalMoves.includes(sq)) {
-            // Dot overlay
-            const dot = document.createElement("div");
-            dot.className = "explore-legal-dot";
+            const dot      = document.createElement("div");
+            dot.className  = "explore-legal-dot";
             const hasPiece = !!exploreChess.get(sq);
             dot.style.cssText = hasPiece
                 ? `position:absolute;inset:0;border-radius:50%;border:3px solid rgba(201,168,76,0.55);pointer-events:none;z-index:5;`
@@ -222,8 +152,8 @@ let exploreLiveToken = 0;
 
 function startLiveEval(fen, whiteTurn) {
     if (!stockfish || !sfReady) return;
-    const myToken = ++exploreLiveToken;
-    const sideToMove = fen.split(" ")[1]; // 'w' or 'b'
+    const myToken   = ++exploreLiveToken;
+    const sideToMove = fen.split(" ")[1];
 
     stockfish.postMessage("stop");
     stockfish.postMessage("position fen " + fen);
@@ -234,10 +164,7 @@ function startLiveEval(fen, whiteTurn) {
         const msg = e.data;
         if (typeof msg !== "string") return;
 
-        if (msg.startsWith("bestmove")) {
-            stockfish.removeEventListener("message", handler);
-            return;
-        }
+        if (msg.startsWith("bestmove")) { stockfish.removeEventListener("message", handler); return; }
         if (!msg.startsWith("info") || !msg.includes("score")) return;
 
         const d  = parseInt((msg.match(/\bdepth (\d+)/)  || [])[1]);
@@ -245,7 +172,6 @@ function startLiveEval(fen, whiteTurn) {
         const mt = (msg.match(/score mate (-?\d+)/)       || [])[1];
         if (isNaN(d)) return;
 
-        // 🔥 Flip to White POV — Stockfish reports side-to-move POV
         let liveCp   = cp !== undefined ? +cp : null;
         let liveMate = mt !== undefined ? +mt : null;
         if (sideToMove === "b") {
@@ -253,7 +179,7 @@ function startLiveEval(fen, whiteTurn) {
             if (liveMate !== null) liveMate = -liveMate;
         }
 
-        updateEvalBar(liveCp, liveMate, true); // always White POV now, so pass true
+        updateEvalBar(liveCp, liveMate, true);
 
         const el = document.getElementById("evalDepth");
         if (el) el.textContent = `Depth: ${d}`;
@@ -263,14 +189,11 @@ function startLiveEval(fen, whiteTurn) {
 }
 
 // ─── Classify explore move ────────────────────────────────────
-let explorePrevCp = 0;  // track cp before each move
+let explorePrevCp = 0;
 
 function classifyExploreMove(moveResult, isWhite) {
-    // We don't have the engine result yet (it's async),
-    // so we show feedback once bestmove arrives
-    const fen = exploreChess.fen();
+    const fen     = exploreChess.fen();
     const myToken = exploreLiveToken;
-
     let bestCpAfter = null;
 
     const handler = (e) => {
@@ -288,29 +211,17 @@ function classifyExploreMove(moveResult, isWhite) {
 
             const cpAfterWP  = fen.split(" ")[1] === "b" ? -(bestCpAfter ?? 0) : (bestCpAfter ?? 0);
             const cpBeforeWP = explorePrevCp;
+            explorePrevCp    = cpAfterWP;
 
-            // Update prev for next move
-            explorePrevCp = cpAfterWP;
-
-            const played = moveResult.from + moveResult.to;
+            const played       = moveResult.from + moveResult.to;
             const playerRating = isWhite ? whiteRating : blackRating;
 
             const cls = classifyMove(
-                cpBeforeWP,
-                cpAfterWP,
-                isWhite,
-                0,
-                played,
-                null,
-                moveResult,
-                fen,
-                null,
-                playerRating
+                cpBeforeWP, cpAfterWP, isWhite,
+                0, played, null, moveResult, fen, null, playerRating
             );
 
             const acc = moveAccuracy(cpBeforeWP, cpAfterWP, isWhite, cls, playerRating);
-
-            // Show feedback in the detail panel
             showExploreFeedback(cls, acc, cpAfterWP, moveResult.san);
         }
     };
@@ -318,33 +229,57 @@ function classifyExploreMove(moveResult, isWhite) {
     stockfish.addEventListener("message", handler);
 }
 
-// ─── Show move feedback in detail panel ──────────────────────
+// ─── Show move classification in detail panel ─────────────────
+// Forces the panel visible and ensures the icon src updates properly
 function showExploreFeedback(cls, acc, cpWP, san) {
     const panel = document.getElementById("moveDetail");
     if (!panel) return;
+
+    // Make the panel visible (it may be hidden between moves)
     panel.style.display = "flex";
 
-    const iconEl  = document.getElementById("detailIcon");
-    const clsEl   = document.getElementById("detailClass");
-    const evalEl  = document.getElementById("detailEval");
-    const bestEl  = document.getElementById("detailBest");
+    const iconEl = document.getElementById("detailIcon");
+    const clsEl  = document.getElementById("detailClass");
+    const evalEl = document.getElementById("detailEval");
+    const bestEl = document.getElementById("detailBest");
 
-    if (iconEl) iconEl.src = `../icons/${cls}.png`;
+    if (iconEl) {
+        // Force a reload if the src hasn't changed (same classification twice in a row)
+        const newSrc = `../icons/${cls}.png`;
+        if (iconEl.src.endsWith(newSrc)) {
+            iconEl.src = "";          // clear first
+            requestAnimationFrame(() => { iconEl.src = newSrc; });
+        } else {
+            iconEl.src = newSrc;
+        }
+        iconEl.alt = cls;
+    }
+
     if (clsEl)  clsEl.textContent  = cls.charAt(0).toUpperCase() + cls.slice(1);
     if (evalEl) evalEl.textContent = (cpWP > 0 ? "+" : "") + (cpWP / 100).toFixed(1);
     if (bestEl) bestEl.textContent = san;
 }
 
+// ─── Hook into navigation: re-enter explore on move change ────
+// When the user steps through the game, reset explore to that position
+const _origGoToMove = window.goToMove;
+if (typeof goToMove === "function") {
+    window.goToMove = function(idx) {
+        _origGoToMove(idx);
+        enterExploreMode();
+    };
+}
+
 // ─── Init on DOM ready ────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
-    initExploreButton();
+    initExploreMode();
 });
 
-// Also init when board screen becomes visible (in case DOMContentLoaded already fired)
+// Also init when analysis screen becomes visible
 const _origShowScreen = window.showScreen;
 if (typeof showScreen === "function") {
     window.showScreen = function(id) {
-        showScreen(id);
-        if (id === "screenAnalysis") initExploreButton();
+        _origShowScreen(id);
+        if (id === "screenAnalysis") initExploreMode();
     };
 }
