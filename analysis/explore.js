@@ -23,12 +23,14 @@ function initExploreMode() {
 
 // ─── Enter ────────────────────────────────────────────────────
 function enterExploreMode() {
+    if (!positions || !positions.length || positions[currentIdx] == null) return;
+
     selectedSq        = null;
     exploreLegalMoves = [];
 
     const pos     = positions[currentIdx];
     exploreChess  = new Chess(pos.fen);
-    explorePrevCp = analysisData[currentIdx]?.cp ?? 0;
+    explorePrevCp = analysisData?.[currentIdx]?.cp ?? 0;
 
     showExploreBanner("Explore mode — click a piece to move");
     renderExplorePosition();
@@ -283,12 +285,10 @@ if (typeof goToMove === "function") {
     };
 }
 
-// ─── Init on DOM ready ────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", () => {
-    initExploreMode();
-});
-
-// Also init when analysis screen becomes visible
+// ─── Init when analysis screen becomes visible ────────────────
+// Don't call initExploreMode on DOMContentLoaded — positions aren't
+// loaded yet at that point. Hook showScreen instead so explore only
+// starts once the game data is actually ready.
 const _origShowScreen = window.showScreen;
 if (typeof showScreen === "function") {
     window.showScreen = function(id) {
