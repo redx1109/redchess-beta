@@ -48,36 +48,37 @@
         }
 
         .play-bots-btn {
-            font-family: var(--font-d);
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 0.35em;
-            text-transform: uppercase;
-            color: var(--gold);
-            background: transparent;
-            border: 1px solid var(--gold-dim);
-            border-radius: 2px;
-            padding: 18px 52px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
-            position: relative;
-            width: 220px;          /* ← add this */
-            text-align: center;    /* ← and this */
-            box-sizing: border-box;
-        }
-        .play-bots-btn::before {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            border-radius: 2px;
-            background: linear-gradient(135deg, rgba(201,168,76,0.12), transparent 60%);
-            opacity: 0;
-            transition: opacity 0.25s;
-            width: auto;
-            min-width: 200px;
-        }
+    font-family: var(--font-d);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold);
+    background: transparent;
+    border: 1px solid var(--gold-dim);
+    border-radius: 2px;
+    padding: 18px 30px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
+    position: relative;
+    width: 220px;
+    text-align: center;
+    box-sizing: border-box;
+    white-space: nowrap;
+}
+.play-bots-btn::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 2px;
+    background: linear-gradient(135deg, rgba(201,168,76,0.12), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.25s;
+    width: auto;
+    min-width: 200px;
+}
         .play-bots-btn:hover { border-color: var(--gold); box-shadow: 0 0 28px rgba(201,168,76,0.2), inset 0 0 20px rgba(201,168,76,0.06); }
         .play-bots-btn:hover::before { opacity: 1; }
 
