@@ -218,7 +218,7 @@ function tryExploreMove(from, to) {
     refreshExploreHighlights();
 
     startLiveEval(fen, whiteTurn);
-    classifyExploreMove(result, isWhite);
+    classifyExploreMove(result, isWhite, from, to);
 
     const inCheckmate = exploreChess.isCheckmate?.() ?? exploreChess.in_checkmate?.() ?? false;
     const inDraw      = exploreChess.isDraw?.()      ?? exploreChess.in_draw?.()      ?? false;
@@ -227,6 +227,7 @@ function tryExploreMove(from, to) {
     if      (inCheckmate) showExploreBanner("Checkmate! ♚");
     else if (inDraw)      showExploreBanner("Draw!");
     else if (inCheck)     showExploreBanner("Check!");
+    else                  showExploreBanner("Explore — click or drag a piece");
 
     return true;
 }
@@ -268,7 +269,7 @@ function startLiveEval(fen, whiteTurn) {
 
     stockfish.postMessage("stop");
     stockfish.postMessage("position fen " + fen);
-    stockfish.postMessage("go depth infinite");
+    stockfish.postMessage("go depth 20");
 
     const handler = (e) => {
         if (myToken !== exploreLiveToken) { stockfish.removeEventListener("message", handler); return; }
@@ -298,7 +299,7 @@ function startLiveEval(fen, whiteTurn) {
 // ══════════════════════════════════════════════════════════════
 //  CLASSIFY + FEEDBACK
 // ══════════════════════════════════════════════════════════════
-function classifyExploreMove(moveResult, isWhite) {
+function classifyExploreMove(moveResult, isWhite, from, to) {
     const fen     = exploreChess.fen();
     const myToken = exploreLiveToken;
     let bestCpAfter = null;
@@ -327,6 +328,40 @@ function classifyExploreMove(moveResult, isWhite) {
                 moveResult, fen, null, playerRating
             );
             const acc = moveAccuracy(cpBeforeWP, cpAfterWP, isWhite, cls, playerRating);
+
+            // ── Chess.com-style square colour highlight ────────
+            if (typeof applyClassificationHighlight === "function") {
+                applyClassificationHighlight(from, to, cls);
+            }
+
+            // ── Floating icon on destination square ───────────
+            const b = document.getElementById("board");
+            if (b) {
+                // Remove any previous explore icon
+                b.querySelectorAll(".sq-class-icon").forEach(el => el.remove());
+
+                const sqEl = b.querySelector(`[data-sq="${to}"]`);
+                if (sqEl) {
+                    const validIcons = new Set([
+                        "brilliant","great","best","good","book",
+                        "inaccuracy","mistake","blunder","miss","forced"
+                    ]);
+                    const iconName = validIcons.has(cls) ? cls : "good";
+                    const icon     = document.createElement("img");
+                    icon.src       = `move_classification/${iconName}.png`;
+                    icon.className = "sq-class-icon";
+                    icon.alt       = cls;
+
+                    // Edge clamping (same logic as board.js)
+                    const file = to.charCodeAt(0) - 97;
+                    const rank = parseInt(to[1]);
+                    if (file === 7) { icon.style.right = "auto"; icon.style.left   = "-13px"; }
+                    if (rank === 8) { icon.style.top   = "auto"; icon.style.bottom = "-13px"; }
+
+                    sqEl.appendChild(icon);
+                }
+            }
+
             showExploreFeedback(cls, acc, cpAfterWP, moveResult.san);
         }
     };
@@ -350,7 +385,7 @@ function showExploreFeedback(cls, acc, cpWP, san) {
     const bestEl = document.getElementById("detailBest");
 
     if (iconEl) {
-        const newSrc = `move_classification/${iconName}.png`;
+        const newSrc = `../icons/${iconName}.png`;
         if (iconEl.getAttribute("src") === newSrc) {
             iconEl.removeAttribute("src");
             requestAnimationFrame(() => { iconEl.src = newSrc; });
