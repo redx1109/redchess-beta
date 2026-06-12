@@ -7,49 +7,76 @@
 let exploreChess      = null;
 let selectedSq        = null;
 let exploreLegalMoves = [];
+let explorePrevCp     = 0;
+let exploreLiveToken  = 0;
 
 // ─── Drag state ───────────────────────────────────────────────
-let dragPiece    = null;   // the floating ghost element
-let dragFromSq   = null;   // square dragging started from
-let dragImg      = null;   // original piece img (hidden while dragging)
+let dragPiece        = null;
+let dragFromSq       = null;
+let dragImg          = null;
+let dragJustFinished = false;
 
-// ─── Init ─────────────────────────────────────────────────────
-function initExploreMode() {
-    if (!boardEl._exploreListenerAttached) {
-        // ── Click (delegated) ──────────────────────────────────
-        // Use capture phase so we catch it before any piece img handler
-        boardEl.addEventListener("click", (e) => {
-            // Ignore clicks that were the end of a drag
-            if (dragJustFinished) { dragJustFinished = false; return; }
-            const sqEl = e.target.closest("[data-sq]");
-            if (sqEl) onExploreSquareClick(sqEl);
-        }, true);
-
-        // ── Drag (pointer events on board, capture phase) ──────
-        boardEl.addEventListener("pointerdown", onDragStart, true);
-        window.addEventListener("pointermove",  onDragMove);
-        window.addEventListener("pointerup",    onDragEnd);
-
-        boardEl._exploreListenerAttached = true;
-    }
-    enterExploreMode();
-}
-
-// ─── Enter / reset to current game position ───────────────────
+// ══════════════════════════════════════════════════════════════
+//  ENTER — spin up exploreChess from current position
+// ══════════════════════════════════════════════════════════════
 function enterExploreMode() {
     if (!positions?.length || positions[currentIdx] == null) return;
 
     selectedSq        = null;
     exploreLegalMoves = [];
+    exploreChess      = new Chess(positions[currentIdx].fen);
+    explorePrevCp     = analysisData?.[currentIdx]?.cp ?? 0;
 
-    exploreChess  = new Chess(positions[currentIdx].fen);
-    explorePrevCp = analysisData?.[currentIdx]?.cp ?? 0;
-
-    showExploreBanner("Explore mode — click or drag a piece");
-    renderExplorePosition();
+    showExploreBanner("Explore — click or drag a piece");
+    // Don't re-render: board.js already rendered the position.
+    // Just refresh any dots/selection overlays.
+    refreshExploreHighlights();
 }
 
-// ─── Banner ───────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+//  ATTACH LISTENERS — once, after DOM is ready
+// ══════════════════════════════════════════════════════════════
+function attachExploreListeners() {
+    const b = document.getElementById("board");
+    if (!b || b._exploreListenerAttached) return;
+
+    // capture phase so piece <img> never swallows the event
+    b.addEventListener("click", (e) => {
+        if (dragJustFinished) { dragJustFinished = false; return; }
+        const sqEl = e.target.closest("[data-sq]");
+        if (sqEl) onExploreSquareClick(sqEl);
+    }, true);
+
+    b.addEventListener("pointerdown", onDragStart, true);
+    window.addEventListener("pointermove", onDragMove);
+    window.addEventListener("pointerup",   onDragEnd);
+
+    b._exploreListenerAttached = true;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  HOOK goToMove — enterExploreMode after every navigation
+//  We wait until window.onload so all scripts (events.js etc.)
+//  have had a chance to define / overwrite goToMove first.
+// ══════════════════════════════════════════════════════════════
+window.addEventListener("load", () => {
+    attachExploreListeners();
+
+    const _orig = window.goToMove;
+    window.goToMove = function(idx) {
+        _orig(idx);
+        // finalize() inside goToMove is sync when no animation,
+        // but async (150 ms) when animating. Wait a tick to be safe.
+        setTimeout(enterExploreMode, 160);
+    };
+
+    // Kick off for the initial position if the board is already visible
+    setTimeout(enterExploreMode, 200);
+});
+
+// ══════════════════════════════════════════════════════════════
+//  BANNER
+// ══════════════════════════════════════════════════════════════
 function showExploreBanner(text) {
     let bar = document.getElementById("exploreBar");
     if (!bar) {
@@ -66,51 +93,37 @@ function showExploreBanner(text) {
     bar.style.display = "block";
 }
 
-// ─── Render ───────────────────────────────────────────────────
-function renderExplorePosition() {
-    if (!exploreChess) return;
-    const hist  = exploreChess.history({ verbose: true });
-    const last  = hist[hist.length - 1];
-    renderPosition(exploreChess.fen(), last ? [last.from, last.to] : [], []);
-    refreshExploreHighlights();
-}
-
 // ══════════════════════════════════════════════════════════════
-//  CLICK LOGIC
+//  CLICK
 // ══════════════════════════════════════════════════════════════
 function onExploreSquareClick(sqEl) {
     if (!exploreChess) return;
     const sq = sqEl.dataset.sq;
     if (!sq) return;
 
-    // Second click — try to move
     if (selectedSq) {
         if (exploreLegalMoves.includes(sq)) { tryExploreMove(selectedSq, sq); return; }
-        if (sq === selectedSq)              { clearSelection(); return; }
+        if (sq === selectedSq)              { clearExploreSelection(); return; }
     }
 
-    // First click — select piece
     const piece = exploreChess.get(sq);
-    if (!piece || piece.color !== exploreChess.turn()) { clearSelection(); return; }
+    if (!piece || piece.color !== exploreChess.turn()) { clearExploreSelection(); return; }
 
     selectedSq        = sq;
     exploreLegalMoves = exploreChess.moves({ square: sq, verbose: true }).map(m => m.to);
     refreshExploreHighlights();
 }
 
-function clearSelection() {
+function clearExploreSelection() {
     selectedSq        = null;
     exploreLegalMoves = [];
     refreshExploreHighlights();
 }
 
 // ══════════════════════════════════════════════════════════════
-//  DRAG LOGIC  (pointer events — works on touch + mouse)
+//  DRAG  (pointer events — mouse + touch)
 // ══════════════════════════════════════════════════════════════
-let dragJustFinished = false;
-
 function getSqElFromPoint(x, y) {
-    // Temporarily hide ghost so elementFromPoint sees the board underneath
     if (dragPiece) dragPiece.style.display = "none";
     const el = document.elementFromPoint(x, y);
     if (dragPiece) dragPiece.style.display = "";
@@ -119,7 +132,6 @@ function getSqElFromPoint(x, y) {
 
 function onDragStart(e) {
     if (!exploreChess) return;
-
     const sqEl = e.target.closest("[data-sq]");
     if (!sqEl) return;
 
@@ -127,62 +139,59 @@ function onDragStart(e) {
     const piece = exploreChess.get(sq);
     if (!piece || piece.color !== exploreChess.turn()) return;
 
-    // Find the piece image inside the square
-    dragImg   = sqEl.querySelector("img");
+    dragImg    = sqEl.querySelector("img");
     dragFromSq = sq;
 
-    // Legal moves for this piece (also shows dots)
     selectedSq        = sq;
     exploreLegalMoves = exploreChess.moves({ square: sq, verbose: true }).map(m => m.to);
     refreshExploreHighlights();
 
-    // Build a ghost that follows the pointer
     if (dragImg) {
-        dragPiece = dragImg.cloneNode();
         const rect = dragImg.getBoundingClientRect();
+        dragPiece  = dragImg.cloneNode();
         dragPiece.style.cssText = `
             position:fixed;pointer-events:none;z-index:9999;
             width:${rect.width}px;height:${rect.height}px;
             left:${e.clientX - rect.width  / 2}px;
             top :${e.clientY - rect.height / 2}px;
-            opacity:0.85;transition:none;
+            opacity:0.9;transition:none;
         `;
         document.body.appendChild(dragPiece);
         dragImg.style.opacity = "0.25";
     }
-
-    boardEl.setPointerCapture?.(e.pointerId);
     e.preventDefault();
 }
 
 function onDragMove(e) {
-    if (!dragPiece || !dragFromSq) return;
-    const rect = dragPiece.getBoundingClientRect();
-    dragPiece.style.left = `${e.clientX - rect.width  / 2}px`;
-    dragPiece.style.top  = `${e.clientY - rect.height / 2}px`;
+    if (!dragPiece) return;
+    const w = parseFloat(dragPiece.style.width);
+    const h = parseFloat(dragPiece.style.height);
+    dragPiece.style.left = `${e.clientX - w / 2}px`;
+    dragPiece.style.top  = `${e.clientY - h / 2}px`;
 
-    // Highlight the square under the cursor
-    const hovSqEl = getSqElFromPoint(e.clientX, e.clientY);
-    boardEl.querySelectorAll(".explore-drag-over").forEach(el => el.classList.remove("explore-drag-over"));
-    if (hovSqEl?.dataset.sq) hovSqEl.classList.add("explore-drag-over");
+    const b = document.getElementById("board");
+    b?.querySelectorAll(".explore-drag-over").forEach(el => el.classList.remove("explore-drag-over"));
+    const hov = getSqElFromPoint(e.clientX, e.clientY);
+    if (hov?.dataset.sq) hov.classList.add("explore-drag-over");
 }
 
 function onDragEnd(e) {
     if (!dragFromSq) return;
 
-    // Clean up ghost
     if (dragPiece) { dragPiece.remove(); dragPiece = null; }
     if (dragImg)   { dragImg.style.opacity = ""; dragImg = null; }
-    boardEl.querySelectorAll(".explore-drag-over").forEach(el => el.classList.remove("explore-drag-over"));
+    document.getElementById("board")
+        ?.querySelectorAll(".explore-drag-over")
+        .forEach(el => el.classList.remove("explore-drag-over"));
 
     const toSqEl = getSqElFromPoint(e.clientX, e.clientY);
     const toSq   = toSqEl?.dataset.sq;
 
     if (toSq && exploreLegalMoves.includes(toSq)) {
-        dragJustFinished = true;   // suppress the click that fires after pointerup
+        dragJustFinished = true;
         tryExploreMove(dragFromSq, toSq);
     } else {
-        clearSelection();
+        clearExploreSelection();
     }
 
     dragFromSq = null;
@@ -195,16 +204,21 @@ function tryExploreMove(from, to) {
     const result = exploreChess.move({ from, to, promotion: "q" });
     if (!result) return false;
 
-    clearSelection();
+    clearExploreSelection();
     playSound(result.captured ? "capture" : "move");
 
     const fen       = exploreChess.fen();
     const isWhite   = result.color === "w";
     const whiteTurn = exploreChess.turn() === "w";
 
+    // Re-render board to new position (reuses board.js renderPosition)
+    const hist = exploreChess.history({ verbose: true });
+    const last  = hist[hist.length - 1];
+    renderPosition(fen, last ? [last.from, last.to] : [], []);
+    refreshExploreHighlights();
+
     startLiveEval(fen, whiteTurn);
     classifyExploreMove(result, isWhite);
-    renderExplorePosition();
 
     const inCheckmate = exploreChess.isCheckmate?.() ?? exploreChess.in_checkmate?.() ?? false;
     const inDraw      = exploreChess.isDraw?.()      ?? exploreChess.in_draw?.()      ?? false;
@@ -213,14 +227,19 @@ function tryExploreMove(from, to) {
     if      (inCheckmate) showExploreBanner("Checkmate! ♚");
     else if (inDraw)      showExploreBanner("Draw!");
     else if (inCheck)     showExploreBanner("Check!");
-    else                  showExploreBanner("Explore mode — click or drag a piece");
+    else                  showExploreBanner("Explore — click or drag a piece");
 
     return true;
 }
 
-// ─── Highlights: selected sq + legal move dots + drag hover ──
+// ══════════════════════════════════════════════════════════════
+//  HIGHLIGHTS  (dots + selected square)
+// ══════════════════════════════════════════════════════════════
 function refreshExploreHighlights() {
-    boardEl.querySelectorAll("[data-sq]").forEach(sqEl => {
+    const b = document.getElementById("board");
+    if (!b) return;
+
+    b.querySelectorAll("[data-sq]").forEach(sqEl => {
         const sq = sqEl.dataset.sq;
         sqEl.classList.remove("explore-selected");
         sqEl.querySelectorAll(".explore-legal-dot").forEach(d => d.remove());
@@ -243,8 +262,6 @@ function refreshExploreHighlights() {
 // ══════════════════════════════════════════════════════════════
 //  LIVE EVAL
 // ══════════════════════════════════════════════════════════════
-let exploreLiveToken = 0;
-
 function startLiveEval(fen, whiteTurn) {
     if (!stockfish || !sfReady) return;
     const myToken    = ++exploreLiveToken;
@@ -282,11 +299,9 @@ function startLiveEval(fen, whiteTurn) {
 // ══════════════════════════════════════════════════════════════
 //  CLASSIFY + FEEDBACK
 // ══════════════════════════════════════════════════════════════
-let explorePrevCp = 0;
-
 function classifyExploreMove(moveResult, isWhite) {
-    const fen       = exploreChess.fen();
-    const myToken   = exploreLiveToken;
+    const fen     = exploreChess.fen();
+    const myToken = exploreLiveToken;
     let bestCpAfter = null;
 
     const handler = (e) => {
@@ -324,58 +339,40 @@ function showExploreFeedback(cls, acc, cpWP, san) {
     if (!panel) return;
     panel.style.display = "flex";
 
+    const validIcons = new Set([
+        "brilliant","great","best","good","book",
+        "inaccuracy","mistake","blunder","miss","forced"
+    ]);
+    const iconName = validIcons.has(cls) ? cls : "good";
+
     const iconEl = document.getElementById("detailIcon");
     const clsEl  = document.getElementById("detailClass");
     const evalEl = document.getElementById("detailEval");
     const bestEl = document.getElementById("detailBest");
 
     if (iconEl) {
-        const validIcons = new Set([
-            "brilliant","great","best","good","book",
-            "inaccuracy","mistake","blunder","miss","forced"
-        ]);
-        const iconFallback = { theoryend: "book" };
-        const iconName     = validIcons.has(cls) ? cls : (iconFallback[cls] ?? "good");
-        const newSrc       = `../icons/${iconName}.png`;
-        if (iconEl.src.endsWith(newSrc)) {
-            iconEl.src = "";
+        const newSrc = `../icons/${iconName}.png`;
+        if (iconEl.getAttribute("src") === newSrc) {
+            iconEl.removeAttribute("src");
             requestAnimationFrame(() => { iconEl.src = newSrc; });
         } else {
             iconEl.src = newSrc;
         }
         iconEl.alt = cls;
     }
-
     if (clsEl)  clsEl.textContent  = cls.charAt(0).toUpperCase() + cls.slice(1);
     if (evalEl) evalEl.textContent = (cpWP > 0 ? "+" : "") + (cpWP / 100).toFixed(1);
     if (bestEl) bestEl.textContent = san;
 }
 
 // ══════════════════════════════════════════════════════════════
-//  HOOK INTO NAVIGATION  (stepping through game resets explore)
+//  CSS  (injected so no stylesheet changes needed)
 // ══════════════════════════════════════════════════════════════
-const _origGoToMove = window.goToMove;
-if (typeof goToMove === "function") {
-    window.goToMove = function(idx) {
-        _origGoToMove(idx);
-        enterExploreMode();
-    };
-}
-
-const _origShowScreen = window.showScreen;
-if (typeof showScreen === "function") {
-    window.showScreen = function(id) {
-        _origShowScreen(id);
-        if (id === "screenAnalysis") initExploreMode();
-    };
-}
-
-// ─── CSS for drag-hover highlight ────────────────────────────
-const exploreStyle = document.createElement("style");
-exploreStyle.textContent = `
-    .explore-selected { outline: 2px solid rgba(201,168,76,0.85) !important; }
-    .explore-drag-over { background: rgba(201,168,76,0.25) !important; }
-    [data-sq] { user-select: none; -webkit-user-select: none; }
-    [data-sq] img { pointer-events: none; user-select: none; draggable: false; }
+const _exploreStyle = document.createElement("style");
+_exploreStyle.textContent = `
+    .explore-selected { outline: 2px solid rgba(201,168,76,0.9) !important; z-index: 2; }
+    .explore-drag-over { background: rgba(201,168,76,0.28) !important; }
+    #board [data-sq] { user-select:none; -webkit-user-select:none; }
+    #board [data-sq] img { pointer-events:none !important; user-select:none; }
 `;
-document.head.appendChild(exploreStyle);
+document.head.appendChild(_exploreStyle);
