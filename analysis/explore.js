@@ -385,7 +385,7 @@ function showExploreFeedback(cls, acc, cpWP, san) {
     const bestEl = document.getElementById("detailBest");
 
     if (iconEl) {
-        const newSrc = `../icons/${iconName}.png`;
+        const newSrc = `move_classification/${iconName}.png`;
         if (iconEl.getAttribute("src") === newSrc) {
             iconEl.removeAttribute("src");
             requestAnimationFrame(() => { iconEl.src = newSrc; });
