@@ -227,7 +227,6 @@ function tryExploreMove(from, to) {
     if      (inCheckmate) showExploreBanner("Checkmate! ♚");
     else if (inDraw)      showExploreBanner("Draw!");
     else if (inCheck)     showExploreBanner("Check!");
-    else                  showExploreBanner("Explore — click or drag a piece");
 
     return true;
 }
@@ -269,7 +268,7 @@ function startLiveEval(fen, whiteTurn) {
 
     stockfish.postMessage("stop");
     stockfish.postMessage("position fen " + fen);
-    stockfish.postMessage("go depth 20");
+    stockfish.postMessage("go depth infinite");
 
     const handler = (e) => {
         if (myToken !== exploreLiveToken) { stockfish.removeEventListener("message", handler); return; }
@@ -351,7 +350,7 @@ function showExploreFeedback(cls, acc, cpWP, san) {
     const bestEl = document.getElementById("detailBest");
 
     if (iconEl) {
-        const newSrc = `../icons/${iconName}.png`;
+        const newSrc = `../move_classification/${iconName}.png`;
         if (iconEl.getAttribute("src") === newSrc) {
             iconEl.removeAttribute("src");
             requestAnimationFrame(() => { iconEl.src = newSrc; });
