@@ -138,7 +138,7 @@ function onDragStart(e) {
     const sq    = sqEl.dataset.sq;
     const piece = exploreChess.get(sq);
     if (!piece || piece.color !== exploreChess.turn()) return;
-
+    e.preventDefault();
     dragImg    = sqEl.querySelector("img");
     dragFromSq = sq;
 
