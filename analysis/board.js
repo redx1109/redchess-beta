@@ -110,9 +110,34 @@ function renderPosition(fen, highlightSqs = [], bestSqs = []) {
                 img.draggable = false;
                 sqEl.appendChild(img);
             }
+            // Rank number — only on a-file squares, top-left
+if (c === 0) {
+    const rankLabel = document.createElement("span");
+    rankLabel.textContent = boardFlipped ? r + 1 : 8 - r;
+    rankLabel.style.cssText = `
+        position:absolute;top:2px;left:3px;
+        font-family:'Cinzel',serif;font-size:9px;font-weight:600;
+        color:${(row + col) % 2 === 0 ? '#b58863' : '#f0d9b5'};
+        pointer-events:none;z-index:3;line-height:1;
+    `;
+    sqEl.appendChild(rankLabel);
+}
 
+// File letter — only on rank-1 squares, bottom-right
+if (r === 7) {
+    const fileLabel = document.createElement("span");
+    fileLabel.textContent = boardFlipped ? String.fromCharCode(104 - c) : String.fromCharCode(97 + c);
+    fileLabel.style.cssText = `
+        position:absolute;bottom:2px;right:3px;
+        font-family:'Cinzel',serif;font-size:9px;font-weight:600;
+        color:${(row + col) % 2 === 0 ? '#b58863' : '#f0d9b5'};
+        pointer-events:none;z-index:3;line-height:1;
+    `;
+    sqEl.appendChild(fileLabel);
+}
+
+boardEl.appendChild(sqEl); // ← this line already exists
             boardEl.appendChild(sqEl);
-            buildCoordLabels();
         }
     }
 }
