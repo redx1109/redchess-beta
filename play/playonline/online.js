@@ -47,6 +47,10 @@ let socket;
       if (typeof updateOnlineCount === 'function') updateOnlineCount();
     });
 
+    socket.on('player:count_changed', () => {
+      if (typeof updateOnlineCount === 'function') updateOnlineCount();
+    });
+
     socket.on('match:incoming', ({ from }) => { showMatchRequest(from); });
     socket.on('match:declined', ({ by })  => { alert(`${by} declined your match request.`); });
     socket.on('match:error',    ({ message }) => { alert(message); });
