@@ -186,6 +186,7 @@ io.on('connection', (socket) => {
       socket.join(username);
       console.log(`👤 Online: ${username}`);
       socket.emit('player:confirmed');
+      io.emit('player:count_changed'); 
     } catch (err) {
       console.error('[player:online]', err.message);
     }
@@ -333,7 +334,7 @@ io.on('connection', (socket) => {
         await Player.findOneAndUpdate({ username }, { socketId: null, online: false });
         removeFromAllQueues(username);
         console.log(`👋 Offline: ${username}`);
-
+        io.emit('player:count_changed');
         const activeRoom = await Room.findOne({
           $or: [{ white: username }, { black: username }]
         });
