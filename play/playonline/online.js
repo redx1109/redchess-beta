@@ -278,7 +278,6 @@ let socket;
 
   window.addEventListener('load', function () {
     sessionStorage.removeItem('_intentionalNav');
-
     const room = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
     if (!room.myColor || !room.roomId) return;
 
@@ -381,13 +380,6 @@ let socket;
 
     if (typeof window.renderBoard === 'function') window.renderBoard();
 
-    window.addEventListener('beforeunload', () => {
-      if (sessionStorage.getItem('_intentionalNav')) return;
-      if (!window.gameOver) {
-        const r = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
-        if (r.roomId) socket?.emit('game:resign', { roomId: r.roomId });
-      }
-    });
   });
 
   window.getOnlinePlayers = async function () {
