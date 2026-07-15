@@ -4,7 +4,7 @@ let socket;
   'use strict';
   let _onlineMoveCallback = null;
   let _onlineReceiving    = false;
-  const SERVER_URL = 'https://redchess-beta.up.railway.app';
+  const SERVER_URL = 'https://redchess-beta.onrender.com';
   let _pendingMoves = [];
   let _gameOverBound = false;
   let _socketRetries = 0;
