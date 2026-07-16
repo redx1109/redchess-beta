@@ -239,9 +239,10 @@
 
     function injectPlayerBars() {
         if (document.getElementById('playerBarBottom')) return;
+        if (document.getElementById('opponentNameplate')) return;
         const board = document.getElementById('board');
         if (!board) return;
-
+        
         // In bot mode, opponentNameplate already shows the bot above the board —
         // skip the top bar entirely to avoid the duplicate name.
         if (!window._botActive) {
