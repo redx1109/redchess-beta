@@ -49,6 +49,7 @@ let socket;
 
     socket.on('player:count_changed', () => {
       if (typeof updateOnlineCount === 'function') updateOnlineCount();
+      fetchOnlinePlayers();
     });
 
     socket.on('match:incoming', ({ from }) => { showMatchRequest(from); });
@@ -388,7 +389,8 @@ let socket;
 
   window.getOnlinePlayers = async function () {
     try {
-      const res  = await fetch(`${SERVER_URL}/api/players/online`);
+      const me = window.getUsername?.() || '';
+      const res  = await fetch(`${SERVER_URL}/api/players/online?username=${encodeURIComponent(me)}`);
       const data = await res.json();
       return data.players || [];
     } catch (e) { return []; }
