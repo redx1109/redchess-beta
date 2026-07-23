@@ -14,7 +14,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <script src="coi-serviceworker.min.js"></script>
   <style>
     @keyframes crownFloat  { 0%,100%{transform:translateY(0)}  50%{transform:translateY(-9px)} }
     @keyframes splashPulse { 0%,100%{opacity:.55;box-shadow:0 0 0 rgba(201,168,76,0)} 50%{opacity:1;box-shadow:0 0 28px rgba(201,168,76,.18)} }
@@ -223,9 +222,10 @@
   </script>
   <script src="script.js"></script>
   <script src="bganimation.js"></script>
-  <script 
-  src="https://redchess-beta.up.railway.app/socket.io/socket.io.js"
-  crossorigin="anonymous">
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+  }
 </script>
 </body>
 </html>
