@@ -8,7 +8,12 @@ const SF_DEPTH = 15;
 function initStockfish() {
     try {
         stockfish = new Worker("../engine/stockfish-18-lite.js");
-        stockfish.onmessage = e => { if (e.data === "readyok") sfReady = true; };
+        console.log("Stockfish worker created, waiting for engine...");
+        stockfish.onmessage = e => {
+            console.log("SF message:", e.data);
+            if (e.data === "readyok") { sfReady = true; console.log("Stockfish READY ✅"); }
+        };
+        stockfish.onerror = err => console.error("Stockfish worker failed to load:", err.message, err);
         stockfish.postMessage("uci");
         stockfish.postMessage("isready");
     } catch (err) {
@@ -38,7 +43,6 @@ function evalPosition(fen, onLiveEval) {
                     if (cp !== undefined) best.cp   = +cp;
                     if (mt !== undefined) best.mate = +mt;
 
-                    // 🔥 Live eval bar update — fires on every new depth
                     if (onLiveEval) {
                         onLiveEval(best.cp, best.mate, isWhiteTurn, best.depth);
                     }
