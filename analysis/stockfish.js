@@ -7,7 +7,7 @@ const SF_DEPTH = 15;
 
 function initStockfish() {
     try {
-        stockfish = new Worker("../engine/stockfish-18.js");
+        stockfish = new Worker("../engine/stockfish-18-lite.js");
         stockfish.onmessage = e => { if (e.data === "readyok") sfReady = true; };
         stockfish.postMessage("uci");
         stockfish.postMessage("isready");
