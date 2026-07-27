@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS players (
+  username  TEXT PRIMARY KEY,
+  createdAt INTEGER NOT NULL
+);
+ 

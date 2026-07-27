@@ -1,0 +1,16 @@
+name = "redchess-beta"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+ 
+[[durable_objects.bindings]]
+name = "HUB"
+class_name = "Hub"
+ 
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Hub"]
+ 
+[[d1_databases]]
+binding = "DB"
+database_name = "redchess-players"
+database_id = "cb7f668e-9936-43de-9d74-bdf2cc7dce52"
