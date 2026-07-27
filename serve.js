@@ -23,6 +23,7 @@ http.createServer((req, res) => {
             "Content-Type": MIME[path.extname(filePath)] || "text/plain",
             "Cross-Origin-Opener-Policy":   "same-origin",
             "Cross-Origin-Embedder-Policy": "require-corp",
+            "Cross-Origin-Resource-Policy": "same-origin",
         });
         res.end(data);
     });
