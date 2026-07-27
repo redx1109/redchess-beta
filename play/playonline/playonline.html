@@ -392,7 +392,7 @@
         try { localStorage.removeItem('chessGameState'); } catch(e) {}
     </script>
 
-    <script src="https://unpkg.com/socket.io-client@4.7.5/dist/socket.io.min.js"></script>
+    <script src="../../worker/socket-shim.js"></script>
     <script src="../moveanimation.js"></script>
     <script src="../movelogic.js"></script>
     <script src="../persistence.js"></script>
@@ -654,21 +654,5 @@
             updateOnlineCount().catch(() => {});
         });
     </script>
-    <script> const ONLINE_TC_PRESETS = {
-    bullet1:  { minutes: 1,  increment: 0 },
-    blitz3:   { minutes: 3,  increment: 0 },
-    blitz3i2: { minutes: 3,  increment: 2 },
-    blitz5:   { minutes: 5,  increment: 0 },
-    rapid10:  { minutes: 10, increment: 0 },
-    rapid15:  { minutes: 15, increment: 10 },
-};
-let _onlineChosenTC = 'blitz3';
-
-function pickOnlineTC(key) {
-    _onlineChosenTC = key;
-    document.querySelectorAll('.online-tc-btn').forEach(b => b.classList.remove('active'));
-    const btn = document.querySelector(`[data-tc="${key}"]`);
-    if (btn) btn.classList.add('active');
-}</script>
 </body>
 </html>
