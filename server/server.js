@@ -161,16 +161,18 @@ app.get('/api/players/search', async (req, res) => {
 
 app.get('/api/players/online', async (req, res) => {
   try {
-    const onlinePlayers = [];
+    const me = (req.query.username || '').trim();
+    const uniqueNames = new Set();
     for (const [, sock] of io.sockets.sockets) {
-      if (sock.data.username) {
-        onlinePlayers.push({ username: sock.data.username });
-      }
+      if (sock.data.username) uniqueNames.add(sock.data.username);
     }
-    res.json({ players: onlinePlayers });
+    const total = uniqueNames.size;
+    if (me) uniqueNames.delete(me);
+    const players = [...uniqueNames].map(username => ({ username }));
+    res.json({ players, total });
   } catch (err) {
     console.error('[/api/players/online]', err.message);
-    res.json({ players: [] });
+    res.json({ players: [], total: 0 });
   }
 });
 
@@ -186,6 +188,7 @@ io.on('connection', (socket) => {
       socket.join(username);
       console.log(`👤 Online: ${username}`);
       socket.emit('player:confirmed');
+      io.emit('player:count_changed'); 
     } catch (err) {
       console.error('[player:online]', err.message);
     }
@@ -333,7 +336,7 @@ io.on('connection', (socket) => {
         await Player.findOneAndUpdate({ username }, { socketId: null, online: false });
         removeFromAllQueues(username);
         console.log(`👋 Offline: ${username}`);
-
+        io.emit('player:count_changed');
         const activeRoom = await Room.findOne({
           $or: [{ white: username }, { black: username }]
         });

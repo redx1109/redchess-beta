@@ -219,22 +219,12 @@
     btn.addEventListener('mouseleave', function(){ btn.style.opacity=muted?'0.3':'0.6'; btn.style.background='rgba(201,168,76,.1)'; });
   })();
   </script>
-
-  <script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js");
-  }
-  </script>
   <script src="script.js"></script>
   <script src="bganimation.js"></script>
-  <script 
-  src="https://redchess-beta.up.railway.app/socket.io/socket.io.js"
-  crossorigin="anonymous">
-  </script>
   <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js');
-    }
-  </script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+  }
+</script>
 </body>
 </html>

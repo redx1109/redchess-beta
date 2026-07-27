@@ -199,7 +199,7 @@
     confirm.textContent = 'Checking…';
 
     try {
-        const SERVER = 'https://redchess-beta.up.railway.app'; // ← your actual server URL
+        const SERVER = 'https://redchess-beta.redchess.workers.dev'; // ← your actual server URL
 
         // Check availability
         const checkRes  = await fetch(`${SERVER}/api/username/check?name=${encodeURIComponent(name)}`);
@@ -239,9 +239,10 @@
 
     function injectPlayerBars() {
         if (document.getElementById('playerBarBottom')) return;
+        if (document.getElementById('opponentNameplate')) return;
         const board = document.getElementById('board');
         if (!board) return;
-
+        
         // In bot mode, opponentNameplate already shows the bot above the board —
         // skip the top bar entirely to avoid the duplicate name.
         if (!window._botActive) {

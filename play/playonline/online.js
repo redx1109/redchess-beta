@@ -47,6 +47,11 @@ let socket;
       if (typeof updateOnlineCount === 'function') updateOnlineCount();
     });
 
+    socket.on('player:count_changed', () => {
+      if (typeof updateOnlineCount === 'function') updateOnlineCount();
+      fetchOnlinePlayers();
+    });
+
     socket.on('match:incoming', ({ from }) => { showMatchRequest(from); });
     socket.on('match:declined', ({ by })  => { alert(`${by} declined your match request.`); });
     socket.on('match:error',    ({ message }) => { alert(message); });
@@ -278,7 +283,6 @@ let socket;
 
   window.addEventListener('load', function () {
     sessionStorage.removeItem('_intentionalNav');
-
     const room = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
     if (!room.myColor || !room.roomId) return;
 
@@ -381,18 +385,12 @@ let socket;
 
     if (typeof window.renderBoard === 'function') window.renderBoard();
 
-    window.addEventListener('beforeunload', () => {
-      if (sessionStorage.getItem('_intentionalNav')) return;
-      if (!window.gameOver) {
-        const r = JSON.parse(localStorage.getItem('onlineRoom') || '{}');
-        if (r.roomId) socket?.emit('game:resign', { roomId: r.roomId });
-      }
-    });
   });
 
   window.getOnlinePlayers = async function () {
     try {
-      const res  = await fetch(`${SERVER_URL}/api/players/online`);
+      const me = window.getUsername?.() || '';
+      const res  = await fetch(`${SERVER_URL}/api/players/online?username=${encodeURIComponent(me)}`);
       const data = await res.json();
       return data.players || [];
     } catch (e) { return []; }
