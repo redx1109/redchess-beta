@@ -49,7 +49,6 @@ let socket;
 
     socket.on('player:count_changed', () => {
       if (typeof updateOnlineCount === 'function') updateOnlineCount();
-      fetchOnlinePlayers();
     });
 
     socket.on('match:incoming', ({ from }) => { showMatchRequest(from); });
