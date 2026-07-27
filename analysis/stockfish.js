@@ -13,7 +13,7 @@ function initStockfish() {
             console.log("SF message:", e.data);
             if (e.data === "readyok") { sfReady = true; console.log("Stockfish READY ✅"); }
         };
-        stockfish.onerror = err => console.error("Stockfish worker failed to load:", err.message, err);
+        stockfish.onerror = err => console.error("Stockfish worker failed to load:", err.message || err.type || "unknown error — check COOP/COEP headers", err);
         stockfish.postMessage("uci");
         stockfish.postMessage("isready");
     } catch (err) {
