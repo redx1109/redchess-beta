@@ -9,6 +9,9 @@ function io(url, opts) {
   const wsUrl = url.replace(/^http/, 'ws') + '/ws';
   let ws = null;
   let queue = [];
+  let shouldReconnect = true;
+  let reconnectDelay = 1000;
+  const maxDelay = 10000;
 
   const socket = {
     on(event, cb) {
@@ -30,27 +33,40 @@ function io(url, opts) {
       return socket;
     },
     connect() {
-      ws = new WebSocket(wsUrl);
-      ws.addEventListener('open', () => {
-        queue.forEach(p => ws.send(p));
-        queue = [];
-        (listeners['connect'] || []).forEach(fn => fn());
-      });
-      ws.addEventListener('message', (msg) => {
-        try {
-          const { event, data } = JSON.parse(msg.data);
-          (listeners[event] || []).forEach(fn => fn(data));
-        } catch (e) { console.error('[socket-shim] bad message', e); }
-      });
-      ws.addEventListener('close', () => (listeners['disconnect'] || []).forEach(fn => fn()));
-      ws.addEventListener('error', (e) => console.error('[socket-shim] ws error', e));
+      shouldReconnect = true;
+      openSocket();
       return socket;
     },
     disconnect() {
+      shouldReconnect = false;
       if (ws) ws.close();
       return socket;
     }
   };
+
+  function openSocket() {
+    ws = new WebSocket(wsUrl);
+    ws.addEventListener('open', () => {
+      reconnectDelay = 1000; // reset backoff on success
+      queue.forEach(p => ws.send(p));
+      queue = [];
+      (listeners['connect'] || []).forEach(fn => fn());
+    });
+    ws.addEventListener('message', (msg) => {
+      try {
+        const { event, data } = JSON.parse(msg.data);
+        (listeners[event] || []).forEach(fn => fn(data));
+      } catch (e) { console.error('[socket-shim] bad message', e); }
+    });
+    ws.addEventListener('close', () => {
+      (listeners['disconnect'] || []).forEach(fn => fn());
+      if (shouldReconnect) {
+        setTimeout(openSocket, reconnectDelay);
+        reconnectDelay = Math.min(reconnectDelay * 1.5, maxDelay);
+      }
+    });
+    ws.addEventListener('error', (e) => console.error('[socket-shim] ws error', e));
+  }
 
   if (opts.autoConnect !== false) socket.connect();
   return socket;
