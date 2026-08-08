@@ -7,7 +7,7 @@ const SF_DEPTH = 15;
 
 function initStockfish() {
     try {
-        stockfish = new Worker("../engine/stockfish-18-lite.js");
+        stockfish = new Worker("../engine/stockfish-18.js");
         console.log("Stockfish worker created, waiting for engine...");
         stockfish.onmessage = e => {
             console.log("SF message:", e.data);
