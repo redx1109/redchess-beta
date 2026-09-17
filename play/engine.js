@@ -47,8 +47,8 @@
     // below ELO 2800 and invisible to any human player.
     var isMobile   = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
     var enginePath = isMobile
-        ? '../engine/stockfish-16.1-lite-single.js'
-        : '../engine/stockfish-16.1-lite-single.js';
+        ? '../engine/stockfish-18-lite-single.js'
+        : '../engine/stockfish-18-lite-single.js';
 
     console.log('[Bot] isMobile:', isMobile, '| engine:', enginePath);
 
